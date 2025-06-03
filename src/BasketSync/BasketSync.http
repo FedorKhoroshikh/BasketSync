@@ -1,0 +1,6 @@
+@BasketSync_HostAddress = http://localhost:5078
+
+GET {{BasketSync_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
