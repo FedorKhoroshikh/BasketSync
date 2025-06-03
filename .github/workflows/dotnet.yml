@@ -20,9 +20,8 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      working-directory: src
-      run: dotnet restore
+      run: dotnet restore src/BasketSync.sln
     - name: Build
-      run: dotnet build  --configuration Release --no-restore
+      run: dotnet build src/BasketSync.sln -c Release --no-restore
     - name: Test
-      run: dotnet test --configuration Release --no-build --verbosity normal
+      run: dotnet test  src/BasketSync.sln -c Release --no-build
