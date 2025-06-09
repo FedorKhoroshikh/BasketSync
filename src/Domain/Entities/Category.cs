@@ -2,8 +2,12 @@ namespace Domain.Entities;
 
 public class Category
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = null!; // Not null
+    public int Id { get; private set; }
+    public string Name { get; private set; } = null!;
 
-    public ICollection<Item>? Items { get; set; } = new List<Item>();
+    private readonly List<Item>? _items = [];
+    public IReadOnlyCollection<Item> Items => _items;
+
+    public Category() { }
+    public Category(string name) => Name = name;
 }
