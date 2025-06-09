@@ -3,10 +3,8 @@ using Domain.Entities;
 
 namespace Infrastructure.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) {  }
-        
         public DbSet<Item> Items => Set<Item>();
         public DbSet<ListItem> ListItems => Set<ListItem>();
         public DbSet<Category> Categories => Set<Category>();
@@ -57,13 +55,13 @@ namespace Infrastructure.Data
                 .HasOne(li => li.Item)
                 .WithMany(i => i.ListItems)
                 .HasForeignKey(li => li.ItemId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ListItem>()
                 .HasOne(li => li.List)
                 .WithMany(l => l.ListItems)
                 .HasForeignKey(li => li.ListId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             
             modelBuilder.Entity<ShoppingList>()
