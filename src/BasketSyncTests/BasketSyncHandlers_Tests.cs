@@ -40,9 +40,19 @@ namespace BasketSyncTests
 
         // ---------- Unit tests ----------
 
+        public async Task GetAllLists_Test()
+        {
+            // TODO: Implement GetAllLists_Test
+        }
+
+        public async Task RemoveList_Test()
+        {
+            // TODO: implement RemoveList_Test
+        }
+
         [TestCase("OBI")]
         [TestCase("S-Market")]
-        public async Task CreateList_ReturnDto_Test(string testName)
+        public async Task CreateList_ReturnDto_Test(string listName)
         {
             var user = Seed.TestUser();
             var db = NewDb();
@@ -51,12 +61,13 @@ namespace BasketSyncTests
             db.Add(user);
             await db.SaveChangesAsync(_ct);
 
-            var cmd = new CreateListCommand(testName, user.Id);
+            var cmd = new CreateListCommand(listName, user.Id);
             var handler = new CreateListHandler(_uow, Mapper);
 
             var dto = await handler.Handle(cmd, _ct);
             
             Assert.That(dto.Id, Is.EqualTo(1));
+            Assert.That(dto.Name, Is.EqualTo(listName));
         }
         
         [TestCase("New_Name")]
@@ -163,7 +174,7 @@ namespace BasketSyncTests
             db.AddRange(list, category, unit, item);
             await db.SaveChangesAsync(_ct);
             
-            var cmd = new AddItemCommand(list.Id, item.Id, quantity);
+            var cmd = new AddListItemCommand(list.Id, item.Id, quantity);
             var handler = new AddItemHandler(_uow, Mapper);
             
             // Act
@@ -192,7 +203,7 @@ namespace BasketSyncTests
             db.AddRange(list, cat, unit, item, listItem);
             await db.SaveChangesAsync(_ct);
             
-            var cmd = new ToggleItemCommand(listItem.Id);
+            var cmd = new ToggleItemCommand(list.Id, listItem.Id);
             var handler = new ToggleItemHandler(_uow);
             
             // Act
@@ -211,7 +222,7 @@ namespace BasketSyncTests
             var handler = new AddItemHandler(new UnitOfWork(db), Mapper);
             
             Assert.ThrowsAsync<KeyNotFoundException>(() => 
-                handler.Handle(new AddItemCommand(ListId: 42, ItemId: 1, Quantity: 1), _ct));
+                handler.Handle(new AddListItemCommand(ListId: 42, ItemId: 1, Quantity: 1), _ct));
         }
     }
 }

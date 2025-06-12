@@ -12,7 +12,7 @@ public static class DI_Infrastructure
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration cfg)
     {
         services.AddDbContext<AppDbContext>(o =>
-            o.UseNpgsql(cfg.GetConnectionString("Default")));
+            o.UseNpgsql(cfg.GetConnectionString("DefaultConnection")));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         return services;
