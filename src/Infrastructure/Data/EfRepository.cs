@@ -9,4 +9,8 @@ internal sealed class EfRepository<T>(AppDbContext db) : IRepository<T>
         => db.FindAsync<T>([id], ct);
 
     public void Add(T entity) => db.Add(entity);
+    
+    public void Remove(T entity) => db.Remove(entity);
+    
+    public IQueryable<T> GetAll() => db.Set<T>();
 }

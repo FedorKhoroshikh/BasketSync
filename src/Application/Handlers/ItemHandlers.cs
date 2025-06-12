@@ -6,15 +6,15 @@ using MediatR;
 
 namespace Application.Handlers;
 
-public sealed class AddItemHandler(IUnitOfWork uow, IMapper mapper) : IRequestHandler<AddItemCommand, ListItemDto>
+public sealed class AddItemHandler(IUnitOfWork uow, IMapper mapper) : IRequestHandler<AddListItemCommand, ListItemDto>
 {
-    public async Task<ListItemDto> Handle(AddItemCommand c, CancellationToken ct)
+    public async Task<ListItemDto> Handle(AddListItemCommand c, CancellationToken ct)
     {
         var list = await uow.ShoppingLists.FindAsync(c.ListId, ct)
-            ?? throw new KeyNotFoundException("Shopping list not found");
+            ?? throw new KeyNotFoundException($"Список с ID=[{c.ListId}] не найден");
 
         var item = await uow.Items.FindAsync(c.ItemId, ct)
-            ?? throw new KeyNotFoundException("Item not found");
+            ?? throw new KeyNotFoundException($"Элемент с ID=[{c.ItemId}] не найден");
         
         var listItem = list.AddItem(item, c.Quantity);
         await uow.SaveChangesAsync(ct);
@@ -28,8 +28,12 @@ public sealed class RemoveItemHandler(IUnitOfWork uow) : IRequestHandler<RemoveI
     public async Task<Unit> Handle(RemoveItemCommand c, CancellationToken ct)
     {
         var list = await uow.ShoppingLists.FindAsync(c.ListId, ct)
-                   ?? throw new KeyNotFoundException("Shopping list not found");
+                   ?? throw new KeyNotFoundException($"Список с ID=[{c.ListId}] не найден");
 
+        // TODO: Ensure that check is correct
+        if (list.ListItems.Single(li => li.Id == c.ListItemId) is null) 
+            throw new KeyNotFoundException($"Элемент списка с ID=[{c.ListItemId}] не найден");
+        
         list.RemoveItem(c.ListItemId);
         
         await uow.SaveChangesAsync(ct);
@@ -42,10 +46,12 @@ public sealed class ToggleItemHandler(IUnitOfWork uow) : IRequestHandler<ToggleI
 {
     public async Task<Unit> Handle(ToggleItemCommand c, CancellationToken ct)
     {
-        var list = await uow.ShoppingLists.FindAsync(c.ItemId, ct)
-                   ?? throw new KeyNotFoundException("Shopping list not found");
+        var list = await uow.ShoppingLists.FindAsync(c.ListId, ct)
+                   ?? throw new KeyNotFoundException($"Список с ID=[{c.ListId}] не найден");
 
-        var listItem = list.ListItems.Single(li => li.Id == c.ItemId);
+        var listItem = list.ListItems.Single(li => li.Id == c.ListItemId)
+                   ?? throw new KeyNotFoundException($"Элемент списка с ID=[{c.ListItemId}] не найден");
+        
         listItem.Toggle();
 
         await uow.SaveChangesAsync(ct);
