@@ -2,11 +2,13 @@ using Application.Commands;
 using Application.DTO;
 using Application.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BasketSync.WebApi.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/items")]
 public class ItemController(IMediator mediator) : ControllerBase
 {

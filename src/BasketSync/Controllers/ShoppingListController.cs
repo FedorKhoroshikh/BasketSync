@@ -1,27 +1,31 @@
+using System.Security.Claims;
 using Application.Commands;
 using Application.DTO;
 using Application.Queries;
-using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 
 namespace BasketSync.WebApi.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/lists")]
 public class ShoppingListController(IMediator mediator) : ControllerBase
 {
+    private int GetUserId() =>
+        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
 #region ShoppingList methods
-    
+
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<ListItemDto>> Update(int id, [FromBody] RenameListRequest body, CancellationToken ct) 
+    public async Task<ActionResult<ListItemDto>> Update(int id, [FromBody] RenameListRequest body, CancellationToken ct)
         => Ok(await mediator.Send(new RenameListCommand(id, body.Name), ct));
-    
+
     [HttpPost]
     public async Task<ActionResult<ShoppingListDto>> Create([FromBody] CreateListRequest body, CancellationToken ct)
     {
-        var dto = await mediator.Send(new CreateListCommand(body.Name, body.UserId), ct);
+        var dto = await mediator.Send(new CreateListCommand(body.Name, GetUserId()), ct);
         return CreatedAtAction(nameof(Get), new {id = dto.Id}, dto);
     }
 
@@ -31,9 +35,9 @@ public class ShoppingListController(IMediator mediator) : ControllerBase
         await mediator.Send(new RemoveListCommand(id), ct);
         return NoContent();
     }
-    
+
 #endregion
-    
+
 #region ListItems methods
 
     [HttpGet("{id:int}")]
@@ -48,14 +52,14 @@ public class ShoppingListController(IMediator mediator) : ControllerBase
         return CreatedAtAction(nameof(Get), new {id = listId}, dto);
     }
 
-    
+
     [HttpDelete("{listId:int}/items")]
     public async Task<ActionResult> DeleteItem(int listId, [FromBody] RemoveListItemRequest body, CancellationToken ct)
     {
         await mediator.Send(new RemoveItemCommand(listId, body.ItemId), ct);
         return NoContent();
     }
-    
+
     [HttpPatch("/api/items/{id:int}/toggle")]
     public async Task<ActionResult> Toggle(int id, CancellationToken ct)
     {
@@ -76,15 +80,15 @@ public class ShoppingListController(IMediator mediator) : ControllerBase
 
     public record AddListItemRequest(int ItemId, int Quantity);
     public record UpdateListItemRequest(int Quantity);
-    
+
 #endregion
 
 #region ShoppingList requests
 
     public record RemoveListItemRequest(int ItemId);
     public record RenameListRequest(string Name);
-    public record CreateListRequest(string Name, int UserId);
-    
+    public record CreateListRequest(string Name);
+
 #endregion
 
 }
