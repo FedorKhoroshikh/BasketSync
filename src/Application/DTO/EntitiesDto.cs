@@ -11,3 +11,5 @@ public record UnitDto(int Id, string Name);
 public record CategoryDto(int Id, string Name);
 
 public record UserDto(int Id, string PwdHash);
+
+public record AuthResultDto(int UserId, string UserName, string Token);
