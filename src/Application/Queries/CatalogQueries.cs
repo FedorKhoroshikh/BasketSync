@@ -3,6 +3,8 @@ using Application.DTO;
 
 namespace Application.Queries;
 
-public sealed record GetCategoriesQuery(int CategoryId) : IRequest<CategoryDto>;
+public sealed record GetAllCategoriesQuery() : IRequest<List<CategoryDto>>;
 
-public class GetUnitQuery(int UnitId) : IRequest<UnitDto>;
+public sealed record GetAllUnitsQuery() : IRequest<List<UnitDto>>;
+
+public sealed record SearchItemsQuery(string Name) : IRequest<List<ItemDto>>;

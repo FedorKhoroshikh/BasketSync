@@ -8,5 +8,7 @@ public interface IUnitOfWork
     IRepository<Item>         Items         { get; }
     IRepository<ListItem>     ListItems     { get; }
     IRepository<User>         Users         { get; }
+    IRepository<Category>     Categories    { get; }
+    IRepository<Unit>         Units         { get; }
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

@@ -10,7 +10,9 @@ public sealed class UnitOfWork(AppDbContext db) : IUnitOfWork
     public IRepository<Item>         Items         => new EfRepository<Item>(db);
     public IRepository<ListItem>     ListItems     => new EfRepository<ListItem>(db);
     public IRepository<User>         Users         => new EfRepository<User>(db);
+    public IRepository<Category>     Categories    => new EfRepository<Category>(db);
+    public IRepository<Unit>         Units         => new EfRepository<Unit>(db);
 
-    public Task<int> SaveChangesAsync(CancellationToken ct = default) 
+    public Task<int> SaveChangesAsync(CancellationToken ct = default)
         => db.SaveChangesAsync(ct);
 }
