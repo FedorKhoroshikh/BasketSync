@@ -40,14 +40,43 @@ namespace BasketSyncTests
 
         // ---------- Unit tests ----------
 
+        [Test]
         public async Task GetAllLists_Test()
         {
-            // TODO: Implement GetAllLists_Test
+            var db = NewDb();
+            _uow = new UnitOfWork(db);
+
+            var user = Seed.TestUser();
+            var list1 = new ShoppingList("List A", user);
+            var list2 = new ShoppingList("List B", user);
+
+            db.AddRange(user, list1, list2);
+            await db.SaveChangesAsync(_ct);
+
+            var handler = new GetAllListsHandler(_uow, Mapper);
+            var result = await handler.Handle(new GetAllListsQuery(user.Id), _ct);
+
+            Assert.That(result, Has.Count.EqualTo(2));
+            Assert.That(result.Select(r => r.Name), Is.EquivalentTo(new[] { "List A", "List B" }));
         }
 
+        [Test]
         public async Task RemoveList_Test()
         {
-            // TODO: implement RemoveList_Test
+            var db = NewDb();
+            _uow = new UnitOfWork(db);
+
+            var user = Seed.TestUser();
+            var list = Seed.TestList(user);
+
+            db.AddRange(user, list);
+            await db.SaveChangesAsync(_ct);
+
+            var handler = new RemoveListHandler(_uow);
+            var result = await handler.Handle(new RemoveListCommand(list.Id), _ct);
+
+            Assert.That(result, Is.EqualTo(MediatR.Unit.Value));
+            Assert.That(await db.ShoppingLists.CountAsync(_ct), Is.EqualTo(0));
         }
 
         [TestCase("OBI")]
