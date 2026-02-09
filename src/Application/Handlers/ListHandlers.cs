@@ -89,9 +89,17 @@ public sealed class GetListHandler(IUnitOfWork uow, IMapper mapper) : IRequestHa
 {
     public async Task<ShoppingListDto> Handle(GetListQuery c, CancellationToken ct)
     {
-        var list = await uow.ShoppingLists.FindAsync(c.ListId, ct)
+        var list = await uow.ShoppingLists
+                       .GetAll()
+                       .Include(l => l.ListItems)
+                           .ThenInclude(li => li.Item)
+                               .ThenInclude(i => i.Category)
+                       .Include(l => l.ListItems)
+                           .ThenInclude(li => li.Item)
+                               .ThenInclude(i => i.Unit)
+                       .FirstOrDefaultAsync(l => l.Id == c.ListId, ct)
                    ?? throw new KeyNotFoundException($"Список с ID=[{c.ListId}] не найден");
-        
+
         return mapper.Map<ShoppingListDto>(list);
     }
 }

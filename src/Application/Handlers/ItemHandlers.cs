@@ -30,10 +30,6 @@ public sealed class RemoveItemHandler(IUnitOfWork uow) : IRequestHandler<RemoveI
         var list = await uow.ShoppingLists.FindAsync(c.ListId, ct)
                    ?? throw new KeyNotFoundException($"Список с ID=[{c.ListId}] не найден");
 
-        // TODO: Ensure that check is correct
-        if (list.ListItems.Single(li => li.Id == c.ListItemId) is null) 
-            throw new KeyNotFoundException($"Элемент списка с ID=[{c.ListItemId}] не найден");
-        
         list.RemoveItem(c.ListItemId);
         
         await uow.SaveChangesAsync(ct);
@@ -49,9 +45,23 @@ public sealed class ToggleItemHandler(IUnitOfWork uow) : IRequestHandler<ToggleI
         var list = await uow.ShoppingLists.FindAsync(c.ListId, ct)
                    ?? throw new KeyNotFoundException($"Список с ID=[{c.ListId}] не найден");
 
-        var listItem = list.ListItems.Single(li => li.Id == c.ListItemId)
+        var listItem = list.ListItems.SingleOrDefault(li => li.Id == c.ListItemId)
                    ?? throw new KeyNotFoundException($"Элемент списка с ID=[{c.ListItemId}] не найден");
-        
+
+        listItem.Toggle();
+
+        await uow.SaveChangesAsync(ct);
+        return Unit.Value;
+    }
+}
+
+public sealed class ToggleListItemByIdHandler(IUnitOfWork uow) : IRequestHandler<ToggleListItemByIdCommand, Unit>
+{
+    public async Task<Unit> Handle(ToggleListItemByIdCommand c, CancellationToken ct)
+    {
+        var listItem = await uow.ListItems.FindAsync(c.ListItemId, ct)
+                       ?? throw new KeyNotFoundException($"Элемент списка с ID=[{c.ListItemId}] не найден");
+
         listItem.Toggle();
 
         await uow.SaveChangesAsync(ct);

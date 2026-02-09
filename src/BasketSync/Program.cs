@@ -54,15 +54,15 @@ app.MapGet("/db-check", async (AppDbContext db) =>
 });
 
 app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
-
 app.UseRouting();
 app.UseCors("AllowAll");
+app.UseAuthorization();
 
 // ---------- Frontend ----------
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+app.MapControllers();
 
 // ---------- Exception configuring ----------
 app.UseExceptionHandler(a => a.Run(async context =>
@@ -71,13 +71,20 @@ app.UseExceptionHandler(a => a.Run(async context =>
     
     context.Response.ContentType = "application/json";
 
+    if (ex is KeyNotFoundException)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+        return;
+    }
+
     if (ex is ConflictException)
     {
         context.Response.StatusCode = StatusCodes.Status409Conflict;
         await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = ex.Message }));
         return;
     }
-    
+
     // fallback
     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
     await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = "Внутренняя ошибка сервера" }));

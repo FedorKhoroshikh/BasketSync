@@ -57,9 +57,9 @@ public class ShoppingListController(IMediator mediator) : ControllerBase
     }
     
     [HttpPatch("/api/items/{id:int}/toggle")]
-    public async Task<ActionResult<ListItem>> Toggle(int listId, [FromBody] ToggleListItemRequest body, CancellationToken ct)
+    public async Task<ActionResult> Toggle(int id, CancellationToken ct)
     {
-        await mediator.Send(new ToggleItemCommand(listId, body.ItemId), ct);
+        await mediator.Send(new ToggleListItemByIdCommand(id), ct);
         return NoContent();
     }
 
@@ -68,7 +68,6 @@ public class ShoppingListController(IMediator mediator) : ControllerBase
 #region ListItem requests
 
     public record AddListItemRequest(int ItemId, int Quantity);
-    public record ToggleListItemRequest(int ItemId);
     
 #endregion
 
