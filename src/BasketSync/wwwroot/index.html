@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,14 +7,65 @@
     <link rel="stylesheet" href="css/styles_main.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Списки покупок</h1>
-        <ul id="lists-container"></ul>
-        <button id="addListBtn"> + Добавить список</button>
+
+<!-- Header -->
+<header class="app-header">
+    <h1>BasketSync</h1>
+</header>
+
+<!-- Main content -->
+<main id="lists-container">
+    <div class="loading" id="loading">Загрузка...</div>
+</main>
+
+<!-- FAB button -->
+<button class="fab" id="fab-add" aria-label="Добавить список">+</button>
+
+<!-- Modal: Create / Rename list -->
+<div class="modal-overlay" id="list-modal">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <h2 id="list-modal-title">Новый список</h2>
+            <button class="modal-close" data-close="list-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label class="field-label">Наименование списка
+                <input type="text" id="list-name-input" placeholder="Например: Продукты на неделю" required>
+            </label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" data-close="list-modal">Отмена</button>
+            <button class="btn-primary" id="btn-save-list">Сохранить</button>
+        </div>
     </div>
-    <script src="js/main.js"></script>
+</div>
+
+<!-- Modal: Confirm delete -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal-sheet modal-sheet--sm">
+        <div class="modal-header">
+            <h2>Удалить список?</h2>
+            <button class="modal-close" data-close="confirm-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirm-text">Список и все его товары будут удалены.</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" data-close="confirm-modal">Отмена</button>
+            <button class="btn-danger" id="btn-confirm-delete">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Context menu -->
+<div class="context-menu" id="context-menu">
+    <button class="context-item" id="ctx-rename">Переименовать</button>
+    <button class="context-item context-item--danger" id="ctx-delete">Удалить</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="js/main.js"></script>
 </body>
-<footer>
-    
-</footer>
 </html>
