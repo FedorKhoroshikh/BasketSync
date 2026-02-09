@@ -26,7 +26,6 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Item>().HasIndex(i => i.Name).IsUnique();
             modelBuilder.Entity<ShoppingList>().HasIndex(s => s.Name).IsUnique();
             modelBuilder.Entity<User>().HasIndex(u => u.Name).IsUnique();
-            modelBuilder.Entity<User>().HasIndex(u => u.PwdHash).IsUnique();
             
             // Required fields setup
             modelBuilder.Entity<Unit>().Property(u => u.Name).IsRequired();

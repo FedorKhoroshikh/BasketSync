@@ -15,6 +15,8 @@ public static class DI_Infrastructure
             o.UseNpgsql(cfg.GetConnectionString("DefaultConnection")));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<IJwtService, JwtService>();
         return services;
     }
 }
