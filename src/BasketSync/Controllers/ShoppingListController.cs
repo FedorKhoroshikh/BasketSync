@@ -63,11 +63,19 @@ public class ShoppingListController(IMediator mediator) : ControllerBase
         return NoContent();
     }
 
-#endregion    
-    
+    [HttpPatch("{listId:int}/items/{itemId:int}")]
+    public async Task<ActionResult<ListItemDto>> UpdateItem(int listId, int itemId, [FromBody] UpdateListItemRequest body, CancellationToken ct)
+    {
+        var dto = await mediator.Send(new UpdateListItemCommand(itemId, body.Quantity), ct);
+        return Ok(dto);
+    }
+
+#endregion
+
 #region ListItem requests
 
     public record AddListItemRequest(int ItemId, int Quantity);
+    public record UpdateListItemRequest(int Quantity);
     
 #endregion
 

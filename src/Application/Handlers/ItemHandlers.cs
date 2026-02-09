@@ -68,3 +68,17 @@ public sealed class ToggleListItemByIdHandler(IUnitOfWork uow) : IRequestHandler
         return Unit.Value;
     }
 }
+
+public sealed class UpdateListItemHandler(IUnitOfWork uow, IMapper mapper) : IRequestHandler<UpdateListItemCommand, ListItemDto>
+{
+    public async Task<ListItemDto> Handle(UpdateListItemCommand c, CancellationToken ct)
+    {
+        var listItem = await uow.ListItems.FindAsync(c.ListItemId, ct)
+                       ?? throw new KeyNotFoundException($"Элемент списка с ID=[{c.ListItemId}] не найден");
+
+        listItem.Quantity = c.Quantity;
+
+        await uow.SaveChangesAsync(ct);
+        return mapper.Map<ListItemDto>(listItem);
+    }
+}

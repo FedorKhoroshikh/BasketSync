@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить товар</title>
+    <link rel="stylesheet" href="css/styles_list.css">
+</head>
+<body>
+<div class="container">
+    <h1 id="list-title">Загрузка...</h1>
+    <ul id="items-container" class="item-list"></ul>
+    <form id="add-item-form" class="form">
+        <input type="text" id="item-name" placeholder="Название товара" required />
+        <input type="number" id="item-qty" placeholder="Количество" min="1" value="1" required />
+        <button type="create">Добавить товар</button>
+    </form>
+</div>
+<script src="js/list.js"></script>
+</body>
+</html>
