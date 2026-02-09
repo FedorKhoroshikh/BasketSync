@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BasketSync — Вход</title>
+    <link rel="stylesheet" href="css/styles_auth.css">
+</head>
+<body>
+
+<div class="auth-container">
+    <div class="auth-logo">BasketSync</div>
+
+    <!-- Login form -->
+    <div id="login-section">
+        <h1 class="auth-title">Вход</h1>
+        <p class="auth-subtitle">Введите имя и пароль</p>
+        <div class="auth-card">
+            <div class="auth-error" id="login-error"></div>
+            <input type="text" class="auth-field" id="login-name" placeholder="Имя пользователя" autocomplete="username">
+            <input type="password" class="auth-field" id="login-password" placeholder="Пароль" autocomplete="current-password">
+            <button class="auth-btn" id="btn-login">Войти</button>
+        </div>
+        <p class="auth-toggle">У вас нет аккаунта? <a id="show-register">Создать аккаунт</a></p>
+    </div>
+
+    <!-- Register form -->
+    <div id="register-section" style="display:none;">
+        <h1 class="auth-title">Регистрация</h1>
+        <p class="auth-subtitle">Создайте новый аккаунт</p>
+        <div class="auth-card">
+            <div class="auth-error" id="register-error"></div>
+            <input type="text" class="auth-field" id="register-name" placeholder="Имя пользователя" autocomplete="username">
+            <input type="password" class="auth-field" id="register-password" placeholder="Пароль" autocomplete="new-password">
+            <input type="password" class="auth-field" id="register-confirm" placeholder="Повторите пароль" autocomplete="new-password">
+            <button class="auth-btn" id="btn-register">Создать аккаунт</button>
+        </div>
+        <p class="auth-toggle">Уже есть аккаунт? <a id="show-login">Войти</a></p>
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,3 +1,23 @@
+// ── Auth check ──
+if (!localStorage.getItem("token")) {
+    window.location.href = "login.html";
+}
+
+function authHeaders(extra = {}) {
+    return { "Authorization": "Bearer " + localStorage.getItem("token"), ...extra };
+}
+
+function authFetch(url, options = {}) {
+    options.headers = authHeaders(options.headers || {});
+    return fetch(url, options).then(res => {
+        if (res.status === 401) {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+        return res;
+    });
+}
+
 // ── State ──
 const listId = new URLSearchParams(location.search).get("id");
 const apiBase = `/api/lists/${listId}`;
@@ -31,7 +51,7 @@ function showToast(msg, isError = false) {
 // ── Data loading ──
 async function loadList() {
     try {
-        const res = await fetch(apiBase);
+        const res = await authFetch(apiBase);
         if (!res.ok) throw new Error("Ошибка загрузки списка");
         const data = await res.json();
 
@@ -130,7 +150,7 @@ container.addEventListener("change", async (e) => {
     if (!e.target.matches("input[type='checkbox']")) return;
     const id = +e.target.dataset.id;
     try {
-        await fetch(`/api/items/${id}/toggle`, { method: "PATCH" });
+        await authFetch(`/api/items/${id}/toggle`, { method: "PATCH" });
         await loadList();
     } catch {
         showToast("Ошибка при обновлении", true);
@@ -167,7 +187,7 @@ function setupContextMenu() {
         menu.classList.remove("context-menu--visible");
         if (!contextTarget) return;
         try {
-            await fetch(`${apiBase}/items`, {
+            await authFetch(`${apiBase}/items`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ itemId: contextTarget })
@@ -199,7 +219,7 @@ function setupEditModal() {
 
         const itemId = document.getElementById("edit-item-modal").dataset.targetId;
         try {
-            await fetch(`${apiBase}/items/${itemId}`, {
+            await authFetch(`${apiBase}/items/${itemId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ quantity: qty })
@@ -254,7 +274,7 @@ async function searchItems(query) {
     }
 
     try {
-        const res = await fetch(`/api/items?search=${encodeURIComponent(query)}`);
+        const res = await authFetch(`/api/items?search=${encodeURIComponent(query)}`);
         const items = await res.json();
 
         if (items.length === 0) {
@@ -283,7 +303,7 @@ document.getElementById("search-results").addEventListener("click", async (e) =>
 
     const itemId = +btn.dataset.itemId;
     try {
-        await fetch(`${apiBase}/items`, {
+        await authFetch(`${apiBase}/items`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ itemId, quantity: 1 })
@@ -301,8 +321,8 @@ async function openCreateItemModal() {
     // Load categories and units
     try {
         const [catRes, unitRes] = await Promise.all([
-            fetch("/api/categories"),
-            fetch("/api/units")
+            authFetch("/api/categories"),
+            authFetch("/api/units")
         ]);
         const categories = await catRes.json();
         const units = await unitRes.json();
@@ -337,7 +357,7 @@ document.getElementById("btn-save-new-item").addEventListener("click", async () 
     }
 
     try {
-        const res = await fetch("/api/items", {
+        const res = await authFetch("/api/items", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, categoryId, unitId })
@@ -353,7 +373,7 @@ document.getElementById("btn-save-new-item").addEventListener("click", async () 
         closeModal("create-item-modal");
 
         // Immediately add to current list
-        await fetch(`${apiBase}/items`, {
+        await authFetch(`${apiBase}/items`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ itemId: newItem.id, quantity: 1 })

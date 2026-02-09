@@ -1,3 +1,23 @@
+// ── Auth check ──
+if (!localStorage.getItem("token")) {
+    window.location.href = "login.html";
+}
+
+function authHeaders(extra = {}) {
+    return { "Authorization": "Bearer " + localStorage.getItem("token"), ...extra };
+}
+
+function authFetch(url, options = {}) {
+    options.headers = authHeaders(options.headers || {});
+    return fetch(url, options).then(res => {
+        if (res.status === 401) {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+        return res;
+    });
+}
+
 // ── State ──
 let lists = [];
 let contextTarget = null; // list id for context menu
@@ -10,12 +30,32 @@ const toastElem = document.getElementById("toast");
 
 // ── Init ──
 document.addEventListener("DOMContentLoaded", () => {
+    displayUserName();
     loadShoppingLists();
     setupModals();
     setupContextMenu();
     setupFab();
     setupListModal();
+    setupLogout();
 });
+
+// ── User display + Logout ──
+function displayUserName() {
+    const nameElem = document.getElementById("user-name");
+    if (nameElem) {
+        nameElem.textContent = localStorage.getItem("userName") || "";
+    }
+}
+
+function setupLogout() {
+    const logoutBtn = document.getElementById("btn-logout");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            localStorage.clear();
+            window.location.href = "login.html";
+        });
+    }
+}
 
 // ── Toast ──
 function showToast(msg, isError = false) {
@@ -27,7 +67,7 @@ function showToast(msg, isError = false) {
 // ── Data loading ──
 async function loadShoppingLists() {
     try {
-        const res = await fetch("/api/users/1/lists");
+        const res = await authFetch("/api/users/me/lists");
         if (!res.ok) throw new Error("Ошибка при загрузке списков");
 
         lists = await res.json();
@@ -111,7 +151,7 @@ function setupListModal() {
         try {
             if (editingListId) {
                 // Rename
-                const res = await fetch(`/api/lists/${editingListId}`, {
+                const res = await authFetch(`/api/lists/${editingListId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ name })
@@ -124,10 +164,10 @@ function setupListModal() {
                 showToast("Список переименован");
             } else {
                 // Create
-                const res = await fetch("/api/lists", {
+                const res = await authFetch("/api/lists", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, userId: 1 })
+                    body: JSON.stringify({ name })
                 });
                 if (res.status === 409) {
                     showToast("Список с таким именем уже существует", true);
@@ -206,7 +246,7 @@ function setupContextMenu() {
     document.getElementById("btn-confirm-delete").addEventListener("click", async () => {
         if (!contextTarget) return;
         try {
-            const res = await fetch(`/api/lists/${contextTarget}`, { method: "DELETE" });
+            const res = await authFetch(`/api/lists/${contextTarget}`, { method: "DELETE" });
             if (!res.ok) throw new Error();
             closeModal("confirm-modal");
             showToast("Список удалён");
