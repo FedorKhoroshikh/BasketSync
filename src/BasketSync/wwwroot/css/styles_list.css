@@ -139,9 +139,7 @@ main {
     color: var(--clr-text-secondary);
 }
 
-.item-card--checked .item-details {
-    text-decoration: line-through;
-}
+.item-card--checked .qty-inline { display: none; }
 
 /* ── Checkbox ── */
 .item-check {
@@ -188,25 +186,77 @@ main {
     margin-bottom: 2px;
 }
 
-/* ── Item info ── */
-.item-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
+/* ── Item name ── */
 .item-name {
+    flex: 1;
     font-size: 0.95rem;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .item-details {
     font-size: 0.8rem;
     color: var(--clr-text-secondary);
+}
+
+/* ── Inline quantity controls ── */
+.qty-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.qty-inline-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--clr-bg);
+    border: 1px solid var(--clr-border);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--clr-text);
+    line-height: 1;
+    transition: background 0.15s;
+}
+
+.qty-inline-btn:hover { background: var(--clr-border); }
+
+.qty-inline-input {
+    width: 40px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid var(--clr-border);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-family: var(--font);
+    -moz-appearance: textfield;
+}
+
+.qty-inline-input::-webkit-outer-spin-button,
+.qty-inline-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.qty-inline-input:focus {
+    outline: none;
+    border-color: var(--clr-primary);
+}
+
+.qty-inline-unit {
+    font-size: 0.8rem;
+    color: var(--clr-text-secondary);
+    margin-left: 2px;
 }
 
 /* ── Item menu button ── */

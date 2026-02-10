@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupModals();
     setupContextMenu();
     setupFab();
-    setupEditModal();
+    setupInlineQty();
 });
 
 // ── Toast ──
@@ -128,9 +128,12 @@ function createItemCard(item, isChecked) {
             <input type="checkbox" ${isChecked ? "checked" : ""} data-id="${item.id}">
             <span class="checkmark"></span>
         </label>
-        <div class="item-info">
-            <span class="item-name">${item.itemName || "—"}</span>
-            <span class="item-details">${item.quantity} ${item.unitName || ""}</span>
+        <span class="item-name">${item.itemName || "—"}</span>
+        <div class="qty-inline">
+            <button class="qty-inline-btn" data-id="${item.id}" data-delta="-1">−</button>
+            <input type="number" class="qty-inline-input" data-id="${item.id}" value="${item.quantity}" min="1">
+            <button class="qty-inline-btn" data-id="${item.id}" data-delta="1">+</button>
+            <span class="qty-inline-unit">${item.unitName || ""}</span>
         </div>
         <button class="item-menu-btn" data-id="${item.id}" aria-label="Меню">⋮</button>
     `;
@@ -178,20 +181,16 @@ function setupContextMenu() {
         menu.classList.remove("context-menu--visible");
     });
 
-    document.getElementById("ctx-edit").addEventListener("click", () => {
-        menu.classList.remove("context-menu--visible");
-        openEditModal(contextTarget);
-    });
-
     document.getElementById("ctx-delete").addEventListener("click", async () => {
         menu.classList.remove("context-menu--visible");
         if (!contextTarget) return;
         try {
-            await authFetch(`${apiBase}/items`, {
+            const res = await authFetch(`${apiBase}/items`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ itemId: contextTarget })
             });
+            if (!res.ok) throw new Error();
             showToast("Товар удалён");
             await loadList();
         } catch {
@@ -200,47 +199,63 @@ function setupContextMenu() {
     });
 }
 
-// ── Edit modal ──
-function setupEditModal() {
-    const qtyInput = document.getElementById("edit-qty");
+// ── Inline quantity controls ──
+function setupInlineQty() {
+    // +/- buttons
+    container.addEventListener("click", async (e) => {
+        const btn = e.target.closest(".qty-inline-btn");
+        if (!btn) return;
 
-    document.getElementById("qty-minus").addEventListener("click", () => {
-        const v = parseInt(qtyInput.value) || 1;
-        if (v > 1) qtyInput.value = v - 1;
-    });
+        const itemId = +btn.dataset.id;
+        const delta = +btn.dataset.delta;
+        const item = currentItems.find(i => i.id === itemId);
+        if (!item) return;
 
-    document.getElementById("qty-plus").addEventListener("click", () => {
-        qtyInput.value = (parseInt(qtyInput.value) || 0) + 1;
-    });
+        const newQty = item.quantity + delta;
+        if (newQty < 1) return;
 
-    document.getElementById("btn-save-edit").addEventListener("click", async () => {
-        const qty = parseInt(qtyInput.value);
-        if (!qty || qty < 1) return;
-
-        const itemId = document.getElementById("edit-item-modal").dataset.targetId;
         try {
-            await authFetch(`${apiBase}/items/${itemId}`, {
+            const res = await authFetch(`${apiBase}/items/${itemId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ quantity: qty })
+                body: JSON.stringify({ quantity: newQty })
             });
-            closeModal("edit-item-modal");
-            showToast("Сохранено");
-            await loadList();
+            if (!res.ok) throw new Error();
+            item.quantity = newQty;
+            btn.closest(".item-card").querySelector(".qty-inline-input").value = newQty;
         } catch {
             showToast("Ошибка сохранения", true);
         }
     });
-}
 
-function openEditModal(itemId) {
-    const item = currentItems.find(i => i.id === itemId);
-    if (!item) return;
+    // Direct input change
+    container.addEventListener("change", async (e) => {
+        if (!e.target.matches(".qty-inline-input")) return;
 
-    document.getElementById("edit-item-title").textContent = item.itemName || "Редактировать";
-    document.getElementById("edit-qty").value = item.quantity;
-    document.getElementById("edit-item-modal").dataset.targetId = itemId;
-    openModal("edit-item-modal");
+        const input = e.target;
+        const itemId = +input.dataset.id;
+        const item = currentItems.find(i => i.id === itemId);
+        if (!item) return;
+
+        let newQty = parseInt(input.value) || 1;
+        if (newQty < 1) newQty = 1;
+        input.value = newQty;
+
+        if (newQty === item.quantity) return;
+
+        try {
+            const res = await authFetch(`${apiBase}/items/${itemId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ quantity: newQty })
+            });
+            if (!res.ok) throw new Error();
+            item.quantity = newQty;
+        } catch {
+            input.value = item.quantity;
+            showToast("Ошибка сохранения", true);
+        }
+    });
 }
 
 // ── FAB + Add item modal ──
@@ -275,7 +290,11 @@ async function searchItems(query) {
 
     try {
         const res = await authFetch(`/api/items?search=${encodeURIComponent(query)}`);
-        const items = await res.json();
+        let items = await res.json();
+
+        // Filter out items already in the list
+        const existingItemIds = new Set(currentItems.map(i => i.itemId));
+        items = items.filter(item => !existingItemIds.has(item.id));
 
         if (items.length === 0) {
             resultsDiv.innerHTML = '<div class="search-empty">Ничего не найдено</div>';
