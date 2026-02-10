@@ -18,8 +18,8 @@ public sealed class GetAllCategoriesHandler(IUnitOfWork uow, IMapper mapper)
     {
         return await uow.Categories
             .GetAll()
-            .ProjectTo<CategoryDto>(mapper.ConfigurationProvider)
             .OrderBy(c => c.Name)
+            .ProjectTo<CategoryDto>(mapper.ConfigurationProvider)
             .ToListAsync(ct);
     }
 }
@@ -31,8 +31,8 @@ public sealed class GetAllUnitsHandler(IUnitOfWork uow, IMapper mapper)
     {
         return await uow.Units
             .GetAll()
-            .ProjectTo<UnitDto>(mapper.ConfigurationProvider)
             .OrderBy(u => u.Name)
+            .ProjectTo<UnitDto>(mapper.ConfigurationProvider)
             .ToListAsync(ct);
     }
 }

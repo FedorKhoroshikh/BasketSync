@@ -101,18 +101,6 @@ app.MapGet("/db-check", async (AppDbContext db) =>
     }
 });
 
-app.UseHttpsRedirection();
-app.UseRouting();
-app.UseCors("AllowAll");
-app.UseAuthentication();
-app.UseAuthorization();
-
-// ---------- Frontend ----------
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
-app.MapControllers();
-
 // ---------- Exception configuring ----------
 app.UseExceptionHandler(a => a.Run(async context =>
 {
@@ -142,8 +130,21 @@ app.UseExceptionHandler(a => a.Run(async context =>
     }
 
     // fallback
+    Console.Error.WriteLine($"[500] Unhandled exception: {ex}");
     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-    await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = "Внутренняя ошибка сервера" }));
+    await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = ex?.Message ?? "Внутренняя ошибка сервера" }));
 }));
+
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
+
+// ---------- Frontend ----------
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.MapControllers();
 
 await app.RunAsync();

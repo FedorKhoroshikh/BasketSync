@@ -9,11 +9,15 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         CreateMap<ListItem, ListItemDto>()
+            .ForCtorParam("ItemName", opt => opt.MapFrom(s => s.Item.Name))
+            .ForCtorParam("CategoryName", opt => opt.MapFrom(s => s.Item.Category.Name))
+            .ForCtorParam("UnitName", opt => opt.MapFrom(s => s.Item.Unit.Name))
             .ForMember(d => d.ItemName, c => c.MapFrom(s => s.Item.Name))
             .ForMember(d => d.CategoryName, c => c.MapFrom(s => s.Item.Category.Name))
             .ForMember(d => d.UnitName, c => c.MapFrom(s => s.Item.Unit.Name));
 
         CreateMap<ShoppingList, ShoppingListDto>()
+            .ForCtorParam("Items", opt => opt.MapFrom(s => s.ListItems))
             .ForMember(d => d.Items, c => c.MapFrom(s => s.ListItems));
 
         CreateMap<Item, ItemDto>()
