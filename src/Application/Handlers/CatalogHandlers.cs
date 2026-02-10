@@ -37,6 +37,17 @@ public sealed class GetAllUnitsHandler(IUnitOfWork uow, IMapper mapper)
     }
 }
 
+public sealed class GetCategoryByIdHandler(IUnitOfWork uow, IMapper mapper)
+    : IRequestHandler<GetCategoryByIdQuery, CategoryDto>
+{
+    public async Task<CategoryDto> Handle(GetCategoryByIdQuery request, CancellationToken ct)
+    {
+        var category = await uow.Categories.FindAsync(request.Id, ct)
+                       ?? throw new KeyNotFoundException($"Категория с ID=[{request.Id}] не найдена");
+        return mapper.Map<CategoryDto>(category);
+    }
+}
+
 public sealed class CreateCategoryHandler(IUnitOfWork uow, IMapper mapper)
     : IRequestHandler<CreateCategoryCommand, CategoryDto>
 {
@@ -44,7 +55,7 @@ public sealed class CreateCategoryHandler(IUnitOfWork uow, IMapper mapper)
     {
         try
         {
-            var category = new Category(c.Name);
+            var category = new Category(c.Name, c.Comment);
             uow.Categories.Add(category);
             await uow.SaveChangesAsync(ct);
             return mapper.Map<CategoryDto>(category);
@@ -53,6 +64,46 @@ public sealed class CreateCategoryHandler(IUnitOfWork uow, IMapper mapper)
         {
             throw new ConflictException($"Категория '{c.Name}' уже существует");
         }
+    }
+}
+
+public sealed class UpdateCategoryHandler(IUnitOfWork uow, IMapper mapper)
+    : IRequestHandler<UpdateCategoryCommand, CategoryDto>
+{
+    public async Task<CategoryDto> Handle(UpdateCategoryCommand c, CancellationToken ct)
+    {
+        var category = await uow.Categories.FindAsync(c.Id, ct)
+                       ?? throw new KeyNotFoundException($"Категория с ID=[{c.Id}] не найдена");
+        try
+        {
+            category.Update(c.Name, c.Comment);
+            await uow.SaveChangesAsync(ct);
+            return mapper.Map<CategoryDto>(category);
+        }
+        catch (DbUpdateException ex) when (ConflictException.IsUniqueViolation(ex))
+        {
+            throw new ConflictException($"Категория '{c.Name}' уже существует");
+        }
+    }
+}
+
+public sealed class DeleteCategoryHandler(IUnitOfWork uow)
+    : IRequestHandler<DeleteCategoryCommand, MediatR.Unit>
+{
+    public async Task<MediatR.Unit> Handle(DeleteCategoryCommand c, CancellationToken ct)
+    {
+        var category = await uow.Categories
+            .GetAll()
+            .Include(cat => cat.Items)
+            .FirstOrDefaultAsync(cat => cat.Id == c.Id, ct)
+            ?? throw new KeyNotFoundException($"Категория с ID=[{c.Id}] не найдена");
+
+        if (category.Items.Count > 0)
+            throw new ConflictException($"Невозможно удалить категорию '{category.Name}': к ней привязаны товары");
+
+        uow.Categories.Remove(category);
+        await uow.SaveChangesAsync(ct);
+        return MediatR.Unit.Value;
     }
 }
 

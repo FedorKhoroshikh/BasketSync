@@ -11,4 +11,9 @@ public sealed record ToggleItemCommand(int ListId, int ListItemId) : IRequest<Un
 
 public sealed record ToggleListItemByIdCommand(int ListItemId) : IRequest<Unit>;
 
-public sealed record UpdateListItemCommand(int ListItemId, int Quantity) : IRequest<ListItemDto>;
+public sealed record UpdateListItemCommand(
+    int ListItemId,
+    int? Quantity = null,
+    string? Comment = null,
+    int? CategoryId = null,
+    int? UnitId = null) : IRequest<ListItemDto>;
