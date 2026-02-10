@@ -21,4 +21,16 @@ public class Item
         Category = category;
         Unit = unit;
     }
+
+    public void SetCategory(Category category)
+    {
+        Category = category;
+        CategoryId = category.Id;
+    }
+
+    public void SetUnit(Unit unit)
+    {
+        Unit = unit;
+        UnitId = unit.Id;
+    }
 }

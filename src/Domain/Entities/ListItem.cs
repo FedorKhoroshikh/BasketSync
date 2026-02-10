@@ -9,6 +9,7 @@ public class ListItem
     
     public int Quantity { get; set; }
     public bool IsChecked { get; set; }
+    public string? Comment { get; set; }
 
     public int ListId { get; private set; }
     public ShoppingList List { get; private set; } = null!;
