@@ -186,15 +186,30 @@ main {
     margin-bottom: 2px;
 }
 
+/* ── Item info block ── */
+.item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
 /* ── Item name ── */
 .item-name {
-    flex: 1;
     font-size: 0.95rem;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
+}
+
+.item-comment {
+    font-size: 0.8rem;
+    color: var(--clr-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .item-details {
@@ -401,6 +416,21 @@ main {
 
 .btn-cancel:hover { background: var(--clr-border); }
 
+.btn-danger {
+    flex: 1;
+    padding: 12px;
+    background: var(--clr-danger);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-danger:hover { background: #C0392B; }
+
 .btn-secondary {
     display: block;
     width: 100%;
@@ -499,7 +529,8 @@ main {
 }
 
 .field-label input,
-.field-label select {
+.field-label select,
+.field-label textarea {
     display: block;
     width: 100%;
     margin-top: 4px;
@@ -511,10 +542,12 @@ main {
     outline: none;
     background: white;
     transition: border-color 0.2s;
+    resize: vertical;
 }
 
 .field-label input:focus,
-.field-label select:focus { border-color: var(--clr-primary); }
+.field-label select:focus,
+.field-label textarea:focus { border-color: var(--clr-primary); }
 
 /* ── Quantity control ── */
 .quantity-control {

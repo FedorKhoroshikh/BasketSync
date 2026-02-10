@@ -69,8 +69,34 @@
     </div>
 </div>
 
+<!-- Modal: Edit list item -->
+<div class="modal-overlay" id="edit-item-modal">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <h2 id="edit-item-title">Редактировать</h2>
+            <button class="modal-close" data-close="edit-item-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label class="field-label">Комментарий
+                <textarea id="edit-item-comment" rows="2" placeholder="Комментарий к товару..."></textarea>
+            </label>
+            <label class="field-label">Категория
+                <select id="edit-item-category"></select>
+            </label>
+            <label class="field-label">Единица измерения
+                <select id="edit-item-unit"></select>
+            </label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" data-close="edit-item-modal">Отмена</button>
+            <button class="btn-primary" id="btn-save-edit">Сохранить</button>
+        </div>
+    </div>
+</div>
+
 <!-- Context menu -->
 <div class="context-menu" id="context-menu">
+    <button class="context-item" id="ctx-edit">Редактировать</button>
     <button class="context-item context-item--danger" id="ctx-delete">Удалить</button>
 </div>
 

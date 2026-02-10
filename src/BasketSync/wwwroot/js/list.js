@@ -123,12 +123,19 @@ function createItemCard(item, isChecked) {
     card.className = "item-card" + (isChecked ? " item-card--checked" : "");
     card.dataset.id = item.id;
 
+    const commentHtml = item.comment
+        ? `<span class="item-comment">${escapeHtml(item.comment)}</span>`
+        : "";
+
     card.innerHTML = `
         <label class="item-check">
             <input type="checkbox" ${isChecked ? "checked" : ""} data-id="${item.id}">
             <span class="checkmark"></span>
         </label>
-        <span class="item-name">${item.itemName || "—"}</span>
+        <div class="item-info">
+            <span class="item-name">${item.itemName || "—"}</span>
+            ${commentHtml}
+        </div>
         <div class="qty-inline">
             <button class="qty-inline-btn" data-id="${item.id}" data-delta="-1">−</button>
             <input type="number" class="qty-inline-input" data-id="${item.id}" value="${item.quantity}" min="1">
@@ -138,6 +145,12 @@ function createItemCard(item, isChecked) {
         <button class="item-menu-btn" data-id="${item.id}" aria-label="Меню">⋮</button>
     `;
     return card;
+}
+
+function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
 }
 
 function updateCounter(bought, total) {
@@ -179,6 +192,13 @@ function setupContextMenu() {
 
     document.addEventListener("click", () => {
         menu.classList.remove("context-menu--visible");
+    });
+
+    document.getElementById("ctx-edit").addEventListener("click", () => {
+        menu.classList.remove("context-menu--visible");
+        if (!contextTarget) return;
+        const item = currentItems.find(i => i.id === contextTarget);
+        if (item) openEditItemModal(item);
     });
 
     document.getElementById("ctx-delete").addEventListener("click", async () => {
@@ -435,4 +455,62 @@ function setupModals() {
             document.querySelectorAll(".modal--visible").forEach(m => closeModal(m.id));
         }
     });
+
+    // Save edit button
+    document.getElementById("btn-save-edit").addEventListener("click", saveEditItem);
+}
+
+// ── Edit item modal ──
+let editingItemId = null;
+
+async function openEditItemModal(item) {
+    editingItemId = item.id;
+    document.getElementById("edit-item-title").textContent = item.itemName || "Редактировать";
+    document.getElementById("edit-item-comment").value = item.comment || "";
+
+    try {
+        const [catRes, unitRes] = await Promise.all([
+            authFetch("/api/categories"),
+            authFetch("/api/units")
+        ]);
+        const categories = await catRes.json();
+        const units = await unitRes.json();
+
+        const catSelect = document.getElementById("edit-item-category");
+        catSelect.innerHTML = categories.map(c =>
+            `<option value="${c.id}" ${c.id === item.categoryId ? "selected" : ""}>${c.name}</option>`
+        ).join("");
+
+        const unitSelect = document.getElementById("edit-item-unit");
+        unitSelect.innerHTML = units.map(u =>
+            `<option value="${u.id}" ${u.id === item.unitId ? "selected" : ""}>${u.name}</option>`
+        ).join("");
+    } catch {
+        showToast("Ошибка загрузки справочников", true);
+        return;
+    }
+
+    openModal("edit-item-modal");
+}
+
+async function saveEditItem() {
+    if (!editingItemId) return;
+
+    const comment = document.getElementById("edit-item-comment").value.trim();
+    const categoryId = +document.getElementById("edit-item-category").value;
+    const unitId = +document.getElementById("edit-item-unit").value;
+
+    try {
+        const res = await authFetch(`${apiBase}/items/${editingItemId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ comment, categoryId, unitId })
+        });
+        if (!res.ok) throw new Error();
+        closeModal("edit-item-modal");
+        showToast("Сохранено");
+        await loadList();
+    } catch {
+        showToast("Ошибка сохранения", true);
+    }
 }
