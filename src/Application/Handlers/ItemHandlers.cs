@@ -27,13 +27,12 @@ public sealed class RemoveItemHandler(IUnitOfWork uow) : IRequestHandler<RemoveI
 {
     public async Task<Unit> Handle(RemoveItemCommand c, CancellationToken ct)
     {
-        var list = await uow.ShoppingLists.FindAsync(c.ListId, ct)
-                   ?? throw new KeyNotFoundException($"Список с ID=[{c.ListId}] не найден");
+        var listItem = await uow.ListItems.FindAsync(c.ListItemId, ct)
+                       ?? throw new KeyNotFoundException($"Элемент списка с ID=[{c.ListItemId}] не найден");
 
-        list.RemoveItem(c.ListItemId);
-        
+        uow.ListItems.Remove(listItem);
         await uow.SaveChangesAsync(ct);
-        
+
         return Unit.Value;
     }
 }
