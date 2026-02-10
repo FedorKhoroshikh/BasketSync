@@ -73,6 +73,17 @@ body.no-scroll { overflow: hidden; }
 
 .header-user__logout:hover { opacity: 1; }
 
+.header-nav-link {
+    color: white;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    transition: opacity 0.2s;
+}
+
+.header-nav-link:hover { opacity: 1; }
+
 .app-header h1 {
     font-size: 1.3rem;
     font-weight: 700;

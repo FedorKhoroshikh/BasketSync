@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Категории — BasketSync</title>
+    <link rel="stylesheet" href="css/styles_list.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+    <a href="index.html" class="back-btn" aria-label="Назад">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <h1>Категории</h1>
+</header>
+
+<!-- Main content -->
+<main id="categories-container">
+    <div class="loading" id="loading">Загрузка...</div>
+</main>
+
+<!-- FAB button -->
+<button class="fab" id="fab-add" aria-label="Добавить категорию">+</button>
+
+<!-- Modal: Create/Edit category -->
+<div class="modal-overlay" id="category-modal">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <h2 id="category-modal-title">Новая категория</h2>
+            <button class="modal-close" data-close="category-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label class="field-label">Название
+                <input type="text" id="category-name" placeholder="Название категории" required>
+            </label>
+            <label class="field-label">Комментарий
+                <textarea id="category-comment" rows="2" placeholder="Комментарий (необязательно)"></textarea>
+            </label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" data-close="category-modal">Отмена</button>
+            <button class="btn-primary" id="btn-save-category">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirm delete -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <h2>Удалить категорию?</h2>
+            <button class="modal-close" data-close="confirm-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirm-text">Категория будет удалена.</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" data-close="confirm-modal">Отмена</button>
+            <button class="btn-primary btn-danger" id="btn-confirm-delete">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Context menu -->
+<div class="context-menu" id="context-menu">
+    <button class="context-item" id="ctx-edit">Редактировать</button>
+    <button class="context-item context-item--danger" id="ctx-delete">Удалить</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="js/categories.js"></script>
+</body>
+</html>
