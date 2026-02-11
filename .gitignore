@@ -234,3 +234,5 @@ resources/
 nul
 .claude/
 CLAUDE.md
+
+src/BasketSync/uploads/
