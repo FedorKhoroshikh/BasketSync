@@ -17,6 +17,7 @@ public static class DI_Infrastructure
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtService, JwtService>();
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
         return services;
     }
 }
