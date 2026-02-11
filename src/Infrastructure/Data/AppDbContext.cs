@@ -11,6 +11,8 @@ namespace Infrastructure.Data
         public DbSet<Unit> Units => Set<Unit>();
         public DbSet<ShoppingList> ShoppingLists => Set<ShoppingList>();
         public DbSet<User> Users => Set<User>();
+        public DbSet<DiscountCard> DiscountCards => Set<DiscountCard>();
+        public DbSet<CardIdentifier> CardIdentifiers => Set<CardIdentifier>();
 
         /// <summary>
         /// Entities validation
@@ -67,6 +69,23 @@ namespace Infrastructure.Data
                 .HasOne(s => s.User)
                 .WithMany(u => u.Lists)
                 .HasForeignKey(s => s.UserId);
+
+            // DiscountCard
+            modelBuilder.Entity<DiscountCard>().Property(d => d.Name).IsRequired();
+            modelBuilder.Entity<DiscountCard>()
+                .HasOne(d => d.User)
+                .WithMany(u => u.DiscountCards)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // CardIdentifier
+            modelBuilder.Entity<CardIdentifier>().Property(ci => ci.Value).IsRequired();
+            modelBuilder.Entity<CardIdentifier>().Property(ci => ci.Type).IsRequired();
+            modelBuilder.Entity<CardIdentifier>()
+                .HasOne(ci => ci.DiscountCard)
+                .WithMany(d => d.Identifiers)
+                .HasForeignKey(ci => ci.DiscountCardId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
