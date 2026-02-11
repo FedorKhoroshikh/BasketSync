@@ -9,6 +9,9 @@ public class User
     private readonly List<ShoppingList> _lists= [];
     public IReadOnlyList<ShoppingList> Lists => _lists;
 
+    private readonly List<DiscountCard> _discountCards = [];
+    public IReadOnlyCollection<DiscountCard> DiscountCards => _discountCards;
+
     public User() { }
     
     public User(string name, string pwdHash) 
