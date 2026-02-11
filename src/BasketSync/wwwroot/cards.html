@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Скидочные карты — BasketSync</title>
+    <link rel="stylesheet" href="css/styles_list.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+    <a href="index.html" class="back-btn" aria-label="Назад">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <h1>Скидочные карты</h1>
+</header>
+
+<!-- Search bar -->
+<div class="cards-search-bar">
+    <input type="text" id="cards-search" placeholder="Поиск по названию...">
+</div>
+
+<!-- Main content -->
+<main id="cards-container">
+    <div class="loading" id="loading">Загрузка...</div>
+</main>
+
+<!-- FAB button -->
+<button class="fab" id="fab-add" aria-label="Добавить карту">+</button>
+
+<!-- Modal: Create/Edit card -->
+<div class="modal-overlay" id="card-modal">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <h2 id="card-modal-title">Новая карта</h2>
+            <button class="modal-close" data-close="card-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label class="field-label">Название
+                <input type="text" id="card-name" placeholder="Например: Пятёрочка" required>
+            </label>
+            <label class="field-label">Комментарий
+                <textarea id="card-comment" placeholder="Скидка, условия и т.д." rows="3"></textarea>
+            </label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" data-close="card-modal">Отмена</button>
+            <button class="btn-primary" id="btn-save-card">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add identifier -->
+<div class="modal-overlay" id="identifier-modal">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <h2>Добавить идентификатор</h2>
+            <button class="modal-close" data-close="identifier-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label class="field-label">Тип
+                <select id="identifier-type">
+                    <option value="0">Номер карты</option>
+                    <option value="1">QR-код</option>
+                    <option value="2">Штрих-код</option>
+                    <option value="3">Изображение</option>
+                </select>
+            </label>
+            <label class="field-label">Значение
+                <input type="text" id="identifier-value" placeholder="Введите номер / код" required>
+            </label>
+            <!-- Image drop zone (shown for non-Manual types) -->
+            <div class="drop-zone" id="drop-zone" style="display:none;">
+                <div class="drop-zone__prompt" id="drop-zone-prompt">Перетащите изображение сюда или нажмите для выбора</div>
+                <img class="drop-zone__preview" id="drop-zone-preview" alt="Preview">
+                <input type="file" id="identifier-image" accept="image/*" hidden>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" data-close="identifier-modal">Отмена</button>
+            <button class="btn-primary" id="btn-save-identifier">Добавить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Card detail (identifiers list) -->
+<div class="modal-overlay" id="detail-modal">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <h2 id="detail-title">Карта</h2>
+            <button class="modal-close" data-close="detail-modal">&times;</button>
+        </div>
+        <div class="modal-body" id="detail-body">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-primary" id="btn-add-identifier">Добавить идентификатор</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirm delete -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal-sheet modal-sheet--sm">
+        <div class="modal-header">
+            <h2>Удалить карту?</h2>
+            <button class="modal-close" data-close="confirm-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirm-text">Карта и все идентификаторы будут удалены.</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" data-close="confirm-modal">Отмена</button>
+            <button class="btn-danger" id="btn-confirm-delete">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox overlay -->
+<div class="lightbox-overlay" id="lightbox">
+    <button class="lightbox-close" id="lightbox-close">&times;</button>
+    <img class="lightbox-img" id="lightbox-img" alt="Card image">
+</div>
+
+<!-- Context menu -->
+<div class="context-menu" id="context-menu">
+    <button class="context-item" id="ctx-detail">Подробнее</button>
+    <button class="context-item" id="ctx-edit">Редактировать</button>
+    <button class="context-item" id="ctx-toggle">Вкл/Выкл</button>
+    <button class="context-item context-item--danger" id="ctx-delete">Удалить</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="js/cards.js"></script>
+</body>
+</html>
