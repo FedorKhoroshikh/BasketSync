@@ -16,3 +16,8 @@ public record CategoryDto(int Id, string Name, string? Comment = null);
 public record UserDto(int Id, string PwdHash);
 
 public record AuthResultDto(int UserId, string UserName, string Token);
+
+public record DiscountCardDto(int Id, int UserId, string Name, string? Comment, bool IsActive,
+    List<CardIdentifierDto>? Identifiers = null);
+
+public record CardIdentifierDto(int Id, int DiscountCardId, int Type, string Value, string? ImagePath = null);

@@ -10,5 +10,7 @@ public interface IUnitOfWork
     IRepository<User>         Users         { get; }
     IRepository<Category>     Categories    { get; }
     IRepository<Unit>         Units         { get; }
+    IRepository<DiscountCard>   DiscountCards   { get; }
+    IRepository<CardIdentifier> CardIdentifiers { get; }
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

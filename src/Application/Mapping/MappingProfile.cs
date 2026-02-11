@@ -31,5 +31,12 @@ public class MappingProfile : Profile
 
         CreateMap<Category, CategoryDto>();
         CreateMap<Unit, UnitDto>();
+
+        CreateMap<DiscountCard, DiscountCardDto>();
+        CreateMap<CardIdentifier, CardIdentifierDto>()
+            .ForCtorParam("Type", opt => opt.MapFrom(s => (int)s.Type))
+            .ForCtorParam("ImagePath", opt => opt.MapFrom(s => s.ImagePath))
+            .ForMember(d => d.Type, c => c.MapFrom(s => (int)s.Type))
+            .ForMember(d => d.ImagePath, c => c.MapFrom(s => s.ImagePath));
     }
 }
