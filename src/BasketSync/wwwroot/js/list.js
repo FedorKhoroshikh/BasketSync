@@ -138,7 +138,7 @@ function createItemCard(item, isChecked) {
         </div>
         <div class="qty-inline">
             <button class="qty-inline-btn" data-id="${item.id}" data-delta="-1">−</button>
-            <input type="number" class="qty-inline-input" data-id="${item.id}" value="${item.quantity}" min="1">
+            <input type="number" class="qty-inline-input" data-id="${item.id}" value="${item.quantity}" min="1" max="9999">
             <button class="qty-inline-btn" data-id="${item.id}" data-delta="1">+</button>
             <span class="qty-inline-unit">${item.unitName || ""}</span>
         </div>
@@ -232,7 +232,7 @@ function setupInlineQty() {
         if (!item) return;
 
         const newQty = item.quantity + delta;
-        if (newQty < 1) return;
+        if (newQty < 1 || newQty > 9999) return;
 
         try {
             const res = await authFetch(`${apiBase}/items/${itemId}`, {
@@ -259,6 +259,7 @@ function setupInlineQty() {
 
         let newQty = parseInt(input.value) || 1;
         if (newQty < 1) newQty = 1;
+        if (newQty > 9999) newQty = 9999;
         input.value = newQty;
 
         if (newQty === item.quantity) return;
