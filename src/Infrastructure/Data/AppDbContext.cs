@@ -79,7 +79,6 @@ namespace Infrastructure.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             // CardIdentifier
-            modelBuilder.Entity<CardIdentifier>().Property(ci => ci.Value).IsRequired();
             modelBuilder.Entity<CardIdentifier>().Property(ci => ci.Type).IsRequired();
             modelBuilder.Entity<CardIdentifier>()
                 .HasOne(ci => ci.DiscountCard)

@@ -8,6 +8,7 @@ public class DiscountCard
     public string Name { get; private set; } = null!;
     public string? Comment { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public bool IsShared { get; private set; }
 
     private readonly List<CardIdentifier> _identifiers = [];
     public IReadOnlyCollection<CardIdentifier> Identifiers => _identifiers;
@@ -22,16 +23,17 @@ public class DiscountCard
         Comment = comment;
     }
 
-    public void Update(string name, string? comment)
+    public void Update(string name, string? comment, bool isShared)
     {
         Name = name;
         Comment = comment;
+        IsShared = isShared;
     }
 
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
 
-    public CardIdentifier AddIdentifier(IdentifierType type, string value, string? imagePath = null)
+    public CardIdentifier AddIdentifier(IdentifierType type, string? value, string? imagePath = null)
     {
         var identifier = new CardIdentifier(this, type, value, imagePath);
         _identifiers.Add(identifier);
