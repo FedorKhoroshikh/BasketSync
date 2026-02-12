@@ -45,6 +45,10 @@
             <label class="field-label">Комментарий
                 <textarea id="card-comment" placeholder="Скидка, условия и т.д." rows="3"></textarea>
             </label>
+            <label class="field-label field-label--checkbox">
+                <input type="checkbox" id="card-shared">
+                Общая карта (видна всем)
+            </label>
         </div>
         <div class="modal-actions">
             <button class="btn-cancel" data-close="card-modal">Отмена</button>
@@ -63,16 +67,14 @@
         <div class="modal-body">
             <label class="field-label">Тип
                 <select id="identifier-type">
-                    <option value="0">Номер карты</option>
-                    <option value="1">QR-код</option>
-                    <option value="2">Штрих-код</option>
-                    <option value="3">Изображение</option>
+                    <option value="0">Номер/код карты</option>
+                    <option value="1">Скриншот карты (QR/штрих-код)</option>
                 </select>
             </label>
-            <label class="field-label">Значение
-                <input type="text" id="identifier-value" placeholder="Введите номер / код" required>
+            <label class="field-label" id="value-label">Значение
+                <input type="text" id="identifier-value" placeholder="Введите номер / код">
             </label>
-            <!-- Image drop zone (shown for non-Manual types) -->
+            <!-- Image drop zone (shown for Screenshot type) -->
             <div class="drop-zone" id="drop-zone" style="display:none;">
                 <div class="drop-zone__prompt" id="drop-zone-prompt">Перетащите изображение сюда или нажмите для выбора</div>
                 <img class="drop-zone__preview" id="drop-zone-preview" alt="Preview">

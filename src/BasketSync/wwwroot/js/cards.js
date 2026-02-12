@@ -25,8 +25,10 @@ let editingId = null;
 let detailCardId = null;
 let selectedImageFile = null;
 let searchFilter = "";
+let editingIdentifierId = null;
+let editingIdentifierImagePath = null;
 
-const IDENTIFIER_TYPES = ["Номер", "QR", "Штрих-код", "Изображение"];
+const IDENTIFIER_TYPES = ["Номер/код", "Скриншот"];
 
 // ── DOM refs ──
 const container = document.getElementById("cards-container");
@@ -83,6 +85,10 @@ function setupSearch() {
 }
 
 // ── Render ──
+function currentUserId() {
+    return parseInt(localStorage.getItem("userId") || "0");
+}
+
 function renderCards() {
     container.innerHTML = "";
 
@@ -110,6 +116,10 @@ function renderCards() {
             ? '<span class="card-badge card-badge--active">Активна</span>'
             : '<span class="card-badge card-badge--inactive">Неактивна</span>';
 
+        const sharedBadge = card.isShared
+            ? '<span class="card-badge card-badge--shared">Общая</span>'
+            : '';
+
         const idCount = card.identifiers ? card.identifiers.length : 0;
         const hasImage = card.identifiers && card.identifiers.some(i => i.imagePath);
         const imageIndicator = hasImage ? '<span class="card-image-indicator" title="Есть изображение">&#x1F5BC;</span>' : '';
@@ -118,7 +128,7 @@ function renderCards() {
             ? `<span class="item-comment">${escapeHtml(card.comment)}</span>`
             : '';
 
-        const metaLine = `<span class="item-comment">${badge} ${imageIndicator} ${idCount} ид.</span>`;
+        const metaLine = `<span class="item-comment">${badge} ${sharedBadge} ${imageIndicator} ${idCount} ид.</span>`;
 
         el.innerHTML = `
             <div class="item-info">
@@ -178,6 +188,14 @@ function setupContextMenu() {
         e.stopPropagation();
 
         contextTarget = +btn.dataset.id;
+        const card = cards.find(c => c.id === contextTarget);
+        const isOwn = card && card.userId === currentUserId();
+
+        // Hide edit/delete for other users' shared cards
+        document.getElementById("ctx-edit").style.display = isOwn ? "" : "none";
+        document.getElementById("ctx-toggle").style.display = isOwn ? "" : "none";
+        document.getElementById("ctx-delete").style.display = isOwn ? "" : "none";
+
         const rect = btn.getBoundingClientRect();
         menu.style.top = rect.bottom + 4 + "px";
         menu.style.right = (window.innerWidth - rect.right) + "px";
@@ -253,6 +271,7 @@ function openCardModal(card) {
         card ? "Редактировать карту" : "Новая карта";
     document.getElementById("card-name").value = card ? card.name : "";
     document.getElementById("card-comment").value = card ? (card.comment || "") : "";
+    document.getElementById("card-shared").checked = card ? !!card.isShared : false;
     openModal("card-modal");
     setTimeout(() => document.getElementById("card-name").focus(), 100);
 }
@@ -260,6 +279,7 @@ function openCardModal(card) {
 document.getElementById("btn-save-card").addEventListener("click", async () => {
     const name = document.getElementById("card-name").value.trim();
     const comment = document.getElementById("card-comment").value.trim() || null;
+    const isShared = document.getElementById("card-shared").checked;
 
     if (!name) { showToast("Введите название", true); return; }
 
@@ -269,13 +289,13 @@ document.getElementById("btn-save-card").addEventListener("click", async () => {
             res = await authFetch(`/api/cards/${editingId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, comment })
+                body: JSON.stringify({ name, comment, isShared })
             });
         } else {
             res = await authFetch("/api/cards", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, comment })
+                body: JSON.stringify({ name, comment, isShared })
             });
         }
 
@@ -303,8 +323,10 @@ async function openDetailModal(cardId) {
         const res = await authFetch(`/api/cards/${cardId}`);
         if (!res.ok) throw new Error();
         const card = await res.json();
+        const isOwn = card.userId === currentUserId();
 
         document.getElementById("detail-title").textContent = card.name;
+        document.getElementById("btn-add-identifier").style.display = isOwn ? "" : "none";
         const body = document.getElementById("detail-body");
 
         if (!card.identifiers || card.identifiers.length === 0) {
@@ -314,12 +336,20 @@ async function openDetailModal(cardId) {
                 const imgThumb = id.imagePath
                     ? `<img src="/${escapeHtml(id.imagePath)}" class="identifier-thumb" alt="img">`
                     : '';
+                const valueText = id.value ? escapeHtml(id.value) : '';
+                const editBtn = isOwn
+                    ? `<button class="identifier-edit" data-id="${id.id}" data-type="${id.type}" data-value="${id.value || ''}" data-image="${id.imagePath || ''}" aria-label="Редактировать">&#x270E;</button>`
+                    : '';
+                const deleteBtn = isOwn
+                    ? `<button class="identifier-delete" data-id="${id.id}" aria-label="Удалить">&times;</button>`
+                    : '';
                 return `
                 <div class="identifier-row">
                     <span class="identifier-type">${IDENTIFIER_TYPES[id.type] || "?"}</span>
-                    <span class="identifier-value">${escapeHtml(id.value)}</span>
+                    <span class="identifier-value">${valueText}</span>
                     ${imgThumb}
-                    <button class="identifier-delete" data-id="${id.id}" aria-label="Удалить">&times;</button>
+                    ${editBtn}
+                    ${deleteBtn}
                 </div>
             `;
             }).join("");
@@ -327,6 +357,19 @@ async function openDetailModal(cardId) {
             // Click on thumbnail → lightbox
             body.querySelectorAll(".identifier-thumb").forEach(img => {
                 img.addEventListener("click", () => openLightbox(img.src));
+            });
+
+            // Edit identifier
+            body.querySelectorAll(".identifier-edit").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    closeModal("detail-modal");
+                    openIdentifierModal({
+                        id: +btn.dataset.id,
+                        type: +btn.dataset.type,
+                        value: btn.dataset.value,
+                        imagePath: btn.dataset.image
+                    });
+                });
             });
 
             body.querySelectorAll(".identifier-delete").forEach(btn => {
@@ -351,12 +394,32 @@ async function openDetailModal(cardId) {
 }
 
 // ── Identifier modal ──
-function openIdentifierModal() {
-    document.getElementById("identifier-value").value = "";
-    document.getElementById("identifier-type").value = "0";
+function openIdentifierModal(existing = null) {
+    editingIdentifierId = existing ? existing.id : null;
+    editingIdentifierImagePath = existing ? existing.imagePath : null;
+
+    document.getElementById("identifier-type").value = existing ? String(existing.type) : "0";
+    document.getElementById("identifier-value").value = existing ? (existing.value || "") : "";
     selectedImageFile = null;
     resetDropZone();
+
+    // If editing and there's an existing image, show preview
+    if (existing && existing.imagePath) {
+        const preview = document.getElementById("drop-zone-preview");
+        const prompt = document.getElementById("drop-zone-prompt");
+        preview.src = "/" + existing.imagePath;
+        preview.style.display = "block";
+        prompt.style.display = "none";
+    }
+
     updateDropZoneVisibility();
+
+    const modalTitle = document.querySelector("#identifier-modal .modal-header h2");
+    modalTitle.textContent = existing ? "Редактировать идентификатор" : "Добавить идентификатор";
+
+    const saveBtn = document.getElementById("btn-save-identifier");
+    saveBtn.textContent = existing ? "Сохранить" : "Добавить";
+
     openModal("identifier-modal");
     setTimeout(() => document.getElementById("identifier-value").focus(), 100);
 }
@@ -395,25 +458,40 @@ function setupIdentifierModal() {
         }
     });
 
-    // Save identifier
+    // Save identifier (create or update)
     document.getElementById("btn-save-identifier").addEventListener("click", async () => {
         const type = parseInt(typeSelect.value);
         const value = document.getElementById("identifier-value").value.trim();
 
-        if (!value) { showToast("Введите значение", true); return; }
+        // Validation: for edit with existing image and no new file, image is still present
+        const hasExistingImage = editingIdentifierId && editingIdentifierImagePath && !selectedImageFile;
+        if (type === 0 && !value) { showToast("Введите номер/код карты", true); return; }
+        if (type === 1 && !value && !selectedImageFile && !hasExistingImage) {
+            showToast("Добавьте скриншот или введите код", true); return;
+        }
 
         try {
             const fd = new FormData();
             fd.append("type", type);
-            fd.append("value", value);
+            if (value) fd.append("value", value);
             if (selectedImageFile) {
                 fd.append("image", selectedImageFile);
             }
 
-            const res = await authFetch(`/api/cards/${detailCardId}/identifiers`, {
-                method: "POST",
-                body: fd
-            });
+            let res;
+            if (editingIdentifierId) {
+                // keepImage = true if no new file selected and had an existing image
+                fd.append("keepImage", (!selectedImageFile && !!editingIdentifierImagePath).toString());
+                res = await authFetch(`/api/identifiers/${editingIdentifierId}`, {
+                    method: "PUT",
+                    body: fd
+                });
+            } else {
+                res = await authFetch(`/api/cards/${detailCardId}/identifiers`, {
+                    method: "POST",
+                    body: fd
+                });
+            }
 
             if (res.status === 409) {
                 showToast("Такой идентификатор уже используется", true);
@@ -422,7 +500,7 @@ function setupIdentifierModal() {
             if (!res.ok) throw new Error();
 
             closeModal("identifier-modal");
-            showToast("Идентификатор добавлен");
+            showToast(editingIdentifierId ? "Идентификатор обновлён" : "Идентификатор добавлен");
             await openDetailModal(detailCardId);
             await loadCards();
         } catch {
@@ -434,7 +512,10 @@ function setupIdentifierModal() {
 function updateDropZoneVisibility() {
     const type = parseInt(document.getElementById("identifier-type").value);
     const dropZone = document.getElementById("drop-zone");
-    dropZone.style.display = (type !== 0) ? "flex" : "none";
+    const valueLabel = document.getElementById("value-label");
+    dropZone.style.display = (type === 1) ? "flex" : "none";
+    valueLabel.querySelector("input").placeholder = (type === 1)
+        ? "Номер/код (необязательно)" : "Введите номер / код";
 }
 
 function setDropZoneFile(file) {
