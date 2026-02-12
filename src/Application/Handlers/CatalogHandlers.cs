@@ -90,6 +90,8 @@ public sealed class UpdateCategoryHandler(IUnitOfWork uow, IMapper mapper)
 public sealed class DeleteCategoryHandler(IUnitOfWork uow)
     : IRequestHandler<DeleteCategoryCommand, MediatR.Unit>
 {
+    private const string DefaultCategoryName = "Без категории";
+
     public async Task<MediatR.Unit> Handle(DeleteCategoryCommand c, CancellationToken ct)
     {
         var category = await uow.Categories
@@ -98,8 +100,18 @@ public sealed class DeleteCategoryHandler(IUnitOfWork uow)
             .FirstOrDefaultAsync(cat => cat.Id == c.Id, ct)
             ?? throw new KeyNotFoundException($"Категория с ID=[{c.Id}] не найдена");
 
+        if (category.Name == DefaultCategoryName)
+            throw new ConflictException($"Невозможно удалить категорию «{DefaultCategoryName}»");
+
         if (category.Items.Count > 0)
-            throw new ConflictException($"Невозможно удалить категорию '{category.Name}': к ней привязаны товары");
+        {
+            var defaultCategory = await uow.Categories
+                .GetAll()
+                .FirstAsync(cat => cat.Name == DefaultCategoryName, ct);
+
+            foreach (var item in category.Items)
+                item.SetCategory(defaultCategory);
+        }
 
         uow.Categories.Remove(category);
         await uow.SaveChangesAsync(ct);

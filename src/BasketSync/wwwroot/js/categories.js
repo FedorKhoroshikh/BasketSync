@@ -127,8 +127,12 @@ function setupContextMenu() {
         if (!contextTarget) return;
         const cat = categories.find(c => c.id === contextTarget);
         if (!cat) return;
+        if (cat.name === "Без категории") {
+            showToast("Нельзя удалить категорию «Без категории»", true);
+            return;
+        }
         document.getElementById("confirm-text").textContent =
-            `Категория «${cat.name}» будет удалена.`;
+            `При удалении категории «${cat.name}» привязанные товары перейдут в категорию «Без категории».`;
         openModal("confirm-modal");
     });
 
@@ -137,12 +141,11 @@ function setupContextMenu() {
         if (!contextTarget) return;
         try {
             const res = await authFetch(`/api/categories/${contextTarget}`, { method: "DELETE" });
-            if (res.status === 409) {
+            if (!res.ok) {
                 const data = await res.json().catch(() => null);
-                showToast(data?.error || "К категории привязаны товары", true);
+                showToast(data?.error || "Ошибка удаления", true);
                 return;
             }
-            if (!res.ok) throw new Error();
             showToast("Категория удалена");
             await loadCategories();
         } catch {

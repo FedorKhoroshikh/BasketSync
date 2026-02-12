@@ -6,6 +6,7 @@ using Infrastructure;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -156,5 +157,16 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.MapControllers();
+
+// ---------- Seed default category ----------
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    if (!await db.Categories.AnyAsync(c => c.Name == "Без категории"))
+    {
+        db.Categories.Add(new Domain.Entities.Category("Без категории"));
+        await db.SaveChangesAsync();
+    }
+}
 
 await app.RunAsync();
