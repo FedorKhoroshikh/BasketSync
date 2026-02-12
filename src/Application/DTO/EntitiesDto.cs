@@ -17,7 +17,7 @@ public record UserDto(int Id, string PwdHash);
 
 public record AuthResultDto(int UserId, string UserName, string Token);
 
-public record DiscountCardDto(int Id, int UserId, string Name, string? Comment, bool IsActive,
+public record DiscountCardDto(int Id, int UserId, string Name, string? Comment, bool IsActive, bool IsShared,
     List<CardIdentifierDto>? Identifiers = null);
 
-public record CardIdentifierDto(int Id, int DiscountCardId, int Type, string Value, string? ImagePath = null);
+public record CardIdentifierDto(int Id, int DiscountCardId, int Type, string? Value, string? ImagePath = null);

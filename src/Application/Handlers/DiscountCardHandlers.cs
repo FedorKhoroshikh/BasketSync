@@ -17,7 +17,7 @@ public sealed class GetUserCardsHandler(IUnitOfWork uow, IMapper mapper)
     {
         var cards = await uow.DiscountCards
             .GetAll()
-            .Where(c => c.UserId == request.UserId)
+            .Where(c => c.UserId == request.UserId || c.IsShared)
             .Include(c => c.Identifiers)
             .OrderBy(c => c.Name)
             .ToListAsync(ct);
@@ -50,6 +50,7 @@ public sealed class CreateDiscountCardHandler(IUnitOfWork uow, IMapper mapper)
                    ?? throw new KeyNotFoundException($"Пользователь с ID=[{c.UserId}] не найден");
 
         var card = new DiscountCard(user, c.Name, c.Comment);
+        card.Update(c.Name, c.Comment, c.IsShared);
         uow.DiscountCards.Add(card);
         await uow.SaveChangesAsync(ct);
         return mapper.Map<DiscountCardDto>(card);
@@ -64,7 +65,7 @@ public sealed class UpdateDiscountCardHandler(IUnitOfWork uow, IMapper mapper)
         var card = await uow.DiscountCards.FindAsync(c.Id, ct)
                    ?? throw new KeyNotFoundException($"Карта с ID=[{c.Id}] не найдена");
 
-        card.Update(c.Name, c.Comment);
+        card.Update(c.Name, c.Comment, c.IsShared);
         await uow.SaveChangesAsync(ct);
         return mapper.Map<DiscountCardDto>(card);
     }
@@ -121,6 +122,42 @@ public sealed class AddCardIdentifierHandler(IUnitOfWork uow, IMapper mapper)
             ?? throw new KeyNotFoundException($"Карта с ID=[{c.DiscountCardId}] не найдена");
 
         var identifier = card.AddIdentifier((IdentifierType)c.Type, c.Value, c.ImagePath);
+        await uow.SaveChangesAsync(ct);
+        return mapper.Map<CardIdentifierDto>(identifier);
+    }
+}
+
+public sealed class UpdateCardIdentifierHandler(IUnitOfWork uow, IMapper mapper, IFileStorageService fileStorage)
+    : IRequestHandler<UpdateCardIdentifierCommand, CardIdentifierDto>
+{
+    public async Task<CardIdentifierDto> Handle(UpdateCardIdentifierCommand c, CancellationToken ct)
+    {
+        var identifier = await uow.CardIdentifiers.FindAsync(c.Id, ct)
+                         ?? throw new KeyNotFoundException($"Идентификатор с ID=[{c.Id}] не найден");
+
+        // Resolve final image path
+        string? finalImagePath;
+        if (c.NewImagePath is not null)
+        {
+            // New image uploaded — delete old one
+            if (!string.IsNullOrEmpty(identifier.ImagePath))
+                fileStorage.Delete(identifier.ImagePath);
+            finalImagePath = c.NewImagePath;
+        }
+        else if (c.KeepImage)
+        {
+            // Keep existing image
+            finalImagePath = identifier.ImagePath;
+        }
+        else
+        {
+            // Image removed — delete old one
+            if (!string.IsNullOrEmpty(identifier.ImagePath))
+                fileStorage.Delete(identifier.ImagePath);
+            finalImagePath = null;
+        }
+
+        identifier.Update((IdentifierType)c.Type, c.Value, finalImagePath);
         await uow.SaveChangesAsync(ct);
         return mapper.Map<CardIdentifierDto>(identifier);
     }
