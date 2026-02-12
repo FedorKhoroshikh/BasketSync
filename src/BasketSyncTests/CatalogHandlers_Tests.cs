@@ -1,4 +1,5 @@
 using Application.Commands;
+using Application.Exceptions;
 using Application.Handlers;
 using Application.Queries;
 using Domain.Entities;
@@ -134,5 +135,64 @@ public class CatalogHandlersTests : TestBase
         Assert.ThrowsAsync<KeyNotFoundException>(() =>
             new CreateItemHandler(_uow, Mapper)
                 .Handle(new CreateItemCommand("Test", 99, 99), _ct));
+    }
+
+    [Test]
+    public async Task DeleteCategory_ReassignsItemsToDefault()
+    {
+        var db = NewDb();
+        _uow = new UnitOfWork(db);
+
+        var defaultCat = new Category("Без категории");
+        var targetCat = new Category("Молочная");
+        var unit = Seed.TestUnit();
+        db.AddRange(defaultCat, targetCat, unit);
+        await db.SaveChangesAsync(_ct);
+
+        var item1 = Seed.TestItem(unit, targetCat, "Молоко");
+        var item2 = Seed.TestItem(unit, targetCat, "Кефир");
+        db.AddRange(item1, item2);
+        await db.SaveChangesAsync(_ct);
+
+        var handler = new DeleteCategoryHandler(_uow);
+        await handler.Handle(new DeleteCategoryCommand(targetCat.Id), _ct);
+
+        Assert.That(await db.Categories.CountAsync(_ct), Is.EqualTo(1));
+        var items = await db.Items.ToListAsync(_ct);
+        Assert.That(items, Has.Count.EqualTo(2));
+        Assert.That(items.All(i => i.CategoryId == defaultCat.Id), Is.True);
+    }
+
+    [Test]
+    public async Task DeleteCategory_DefaultCategory_ThrowsConflict()
+    {
+        var db = NewDb();
+        _uow = new UnitOfWork(db);
+
+        var defaultCat = new Category("Без категории");
+        db.Add(defaultCat);
+        await db.SaveChangesAsync(_ct);
+
+        var handler = new DeleteCategoryHandler(_uow);
+        Assert.ThrowsAsync<ConflictException>(() =>
+            handler.Handle(new DeleteCategoryCommand(defaultCat.Id), _ct));
+    }
+
+    [Test]
+    public async Task DeleteCategory_NoItems_DeletesNormally()
+    {
+        var db = NewDb();
+        _uow = new UnitOfWork(db);
+
+        var defaultCat = new Category("Без категории");
+        var cat = new Category("Пустая");
+        db.AddRange(defaultCat, cat);
+        await db.SaveChangesAsync(_ct);
+
+        var handler = new DeleteCategoryHandler(_uow);
+        await handler.Handle(new DeleteCategoryCommand(cat.Id), _ct);
+
+        Assert.That(await db.Categories.CountAsync(_ct), Is.EqualTo(1));
+        Assert.That((await db.Categories.FirstAsync(_ct)).Name, Is.EqualTo("Без категории"));
     }
 }

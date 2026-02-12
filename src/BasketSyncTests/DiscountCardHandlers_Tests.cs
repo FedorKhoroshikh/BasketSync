@@ -92,7 +92,7 @@ public class DiscountCardHandlersTests : TestBase
         await db.SaveChangesAsync(_ct);
 
         var card = new DiscountCard(user, "Лента", "7% скидка");
-        card.AddIdentifier(IdentifierType.Manual, "1234567890");
+        card.AddIdentifier(IdentifierType.CardNumber, "1234567890");
         db.Add(card);
         await db.SaveChangesAsync(_ct);
 
@@ -117,8 +117,8 @@ public class DiscountCardHandlersTests : TestBase
         await db.SaveChangesAsync(_ct);
 
         var card = new DiscountCard(user, "TestCard");
-        card.AddIdentifier(IdentifierType.QrCode, "qr-value", "uploads/cards/img1.png");
-        card.AddIdentifier(IdentifierType.Manual, "manual-value");
+        card.AddIdentifier(IdentifierType.Screenshot, "qr-value", "uploads/cards/img1.png");
+        card.AddIdentifier(IdentifierType.CardNumber, "manual-value");
         db.Add(card);
         await db.SaveChangesAsync(_ct);
 
@@ -143,10 +143,10 @@ public class DiscountCardHandlersTests : TestBase
 
         var handler = new AddCardIdentifierHandler(_uow, Mapper);
         var dto = await handler.Handle(
-            new AddCardIdentifierCommand(card.Id, (int)IdentifierType.Manual, "9999888877"), _ct);
+            new AddCardIdentifierCommand(card.Id, (int)IdentifierType.CardNumber, "9999888877"), _ct);
 
         Assert.That(dto.Value, Is.EqualTo("9999888877"));
-        Assert.That(dto.Type, Is.EqualTo((int)IdentifierType.Manual));
+        Assert.That(dto.Type, Is.EqualTo((int)IdentifierType.CardNumber));
         Assert.That(dto.ImagePath, Is.Null);
         Assert.That(await db.CardIdentifiers.CountAsync(_ct), Is.EqualTo(1));
     }
@@ -165,10 +165,10 @@ public class DiscountCardHandlersTests : TestBase
 
         var handler = new AddCardIdentifierHandler(_uow, Mapper);
         var dto = await handler.Handle(
-            new AddCardIdentifierCommand(card.Id, (int)IdentifierType.QrCode, "qr-data", "uploads/cards/test.png"), _ct);
+            new AddCardIdentifierCommand(card.Id, (int)IdentifierType.Screenshot, "qr-data", "uploads/cards/test.png"), _ct);
 
         Assert.That(dto.ImagePath, Is.EqualTo("uploads/cards/test.png"));
-        Assert.That(dto.Type, Is.EqualTo((int)IdentifierType.QrCode));
+        Assert.That(dto.Type, Is.EqualTo((int)IdentifierType.Screenshot));
     }
 
     [Test]
@@ -181,7 +181,7 @@ public class DiscountCardHandlersTests : TestBase
         var user = Seed.TestUser();
         db.Add(user);
         var card = new DiscountCard(user, "TestCard");
-        card.AddIdentifier(IdentifierType.Image, "photo", "uploads/cards/photo.jpg");
+        card.AddIdentifier(IdentifierType.Screenshot, "photo", "uploads/cards/photo.jpg");
         db.Add(card);
         await db.SaveChangesAsync(_ct);
 
@@ -196,7 +196,28 @@ public class DiscountCardHandlersTests : TestBase
     }
 
     [Test]
-    public async Task ResolveCard_ByManualNumber_Success()
+    public async Task AddIdentifier_ScreenshotWithoutValue_Success()
+    {
+        var db = NewDb();
+        _uow = new UnitOfWork(db);
+
+        var user = Seed.TestUser();
+        db.Add(user);
+        var card = new DiscountCard(user, "TestCard");
+        db.Add(card);
+        await db.SaveChangesAsync(_ct);
+
+        var handler = new AddCardIdentifierHandler(_uow, Mapper);
+        var dto = await handler.Handle(
+            new AddCardIdentifierCommand(card.Id, (int)IdentifierType.Screenshot, null, "uploads/cards/qr.png"), _ct);
+
+        Assert.That(dto.Value, Is.Null);
+        Assert.That(dto.ImagePath, Is.EqualTo("uploads/cards/qr.png"));
+        Assert.That(dto.Type, Is.EqualTo((int)IdentifierType.Screenshot));
+    }
+
+    [Test]
+    public async Task ResolveCard_ByCardNumber_Success()
     {
         var db = NewDb();
         _uow = new UnitOfWork(db);
@@ -204,7 +225,7 @@ public class DiscountCardHandlersTests : TestBase
         var user = Seed.TestUser();
         db.Add(user);
         var card = new DiscountCard(user, "Перекрёсток", "12% скидка");
-        card.AddIdentifier(IdentifierType.Manual, "111222333");
+        card.AddIdentifier(IdentifierType.CardNumber, "111222333");
         db.Add(card);
         await db.SaveChangesAsync(_ct);
 
@@ -225,7 +246,7 @@ public class DiscountCardHandlersTests : TestBase
         db.Add(user);
         var card = new DiscountCard(user, "Old", "old card");
         card.Deactivate();
-        card.AddIdentifier(IdentifierType.Manual, "000111");
+        card.AddIdentifier(IdentifierType.CardNumber, "000111");
         db.Add(card);
         await db.SaveChangesAsync(_ct);
 
@@ -268,5 +289,125 @@ public class DiscountCardHandlersTests : TestBase
         await handler.Handle(new ToggleDiscountCardCommand(card.Id), _ct);
         await db.Entry(updated).ReloadAsync(_ct);
         Assert.That(updated.IsActive, Is.True);
+    }
+
+    [Test]
+    public async Task UpdateIdentifier_ChangesValueAndType()
+    {
+        var db = NewDb();
+        _uow = new UnitOfWork(db);
+        var fakeFs = new FakeFileStorage();
+
+        var user = Seed.TestUser();
+        db.Add(user);
+        var card = new DiscountCard(user, "TestCard");
+        card.AddIdentifier(IdentifierType.CardNumber, "old-value");
+        db.Add(card);
+        await db.SaveChangesAsync(_ct);
+
+        var identifierId = (await db.CardIdentifiers.FirstAsync(_ct)).Id;
+
+        var handler = new UpdateCardIdentifierHandler(_uow, Mapper, fakeFs);
+        var dto = await handler.Handle(
+            new UpdateCardIdentifierCommand(identifierId, (int)IdentifierType.Screenshot, "new-value", "uploads/cards/new.png", false), _ct);
+
+        Assert.That(dto.Type, Is.EqualTo((int)IdentifierType.Screenshot));
+        Assert.That(dto.Value, Is.EqualTo("new-value"));
+        Assert.That(dto.ImagePath, Is.EqualTo("uploads/cards/new.png"));
+    }
+
+    [Test]
+    public async Task UpdateIdentifier_ReplacesImage_DeletesOldFile()
+    {
+        var db = NewDb();
+        _uow = new UnitOfWork(db);
+        var fakeFs = new FakeFileStorage();
+
+        var user = Seed.TestUser();
+        db.Add(user);
+        var card = new DiscountCard(user, "TestCard");
+        card.AddIdentifier(IdentifierType.Screenshot, null, "uploads/cards/old.png");
+        db.Add(card);
+        await db.SaveChangesAsync(_ct);
+
+        var identifierId = (await db.CardIdentifiers.FirstAsync(_ct)).Id;
+
+        var handler = new UpdateCardIdentifierHandler(_uow, Mapper, fakeFs);
+        await handler.Handle(
+            new UpdateCardIdentifierCommand(identifierId, (int)IdentifierType.Screenshot, null, "uploads/cards/new.png", false), _ct);
+
+        Assert.That(fakeFs.Deleted, Has.Count.EqualTo(1));
+        Assert.That(fakeFs.Deleted[0], Is.EqualTo("uploads/cards/old.png"));
+    }
+
+    [Test]
+    public async Task UpdateIdentifier_KeepImage_PreservesExisting()
+    {
+        var db = NewDb();
+        _uow = new UnitOfWork(db);
+        var fakeFs = new FakeFileStorage();
+
+        var user = Seed.TestUser();
+        db.Add(user);
+        var card = new DiscountCard(user, "TestCard");
+        card.AddIdentifier(IdentifierType.Screenshot, "old-code", "uploads/cards/keep.png");
+        db.Add(card);
+        await db.SaveChangesAsync(_ct);
+
+        var identifierId = (await db.CardIdentifiers.FirstAsync(_ct)).Id;
+
+        var handler = new UpdateCardIdentifierHandler(_uow, Mapper, fakeFs);
+        var dto = await handler.Handle(
+            new UpdateCardIdentifierCommand(identifierId, (int)IdentifierType.Screenshot, "new-code", null, true), _ct);
+
+        Assert.That(dto.Value, Is.EqualTo("new-code"));
+        Assert.That(dto.ImagePath, Is.EqualTo("uploads/cards/keep.png"));
+        Assert.That(fakeFs.Deleted, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetUserCards_ReturnsOwnAndSharedCards()
+    {
+        var db = NewDb();
+        _uow = new UnitOfWork(db);
+
+        var alice = Seed.TestUser("Alice");
+        var bob = Seed.TestUser("Bob");
+        db.AddRange(alice, bob);
+        await db.SaveChangesAsync(_ct);
+
+        var aliceCard = new DiscountCard(alice, "AlicePrivate");
+        var bobShared = new DiscountCard(bob, "BobShared");
+        bobShared.Update("BobShared", null, true);
+        var bobPrivate = new DiscountCard(bob, "BobPrivate");
+        db.AddRange(aliceCard, bobShared, bobPrivate);
+        await db.SaveChangesAsync(_ct);
+
+        var handler = new GetUserCardsHandler(_uow, Mapper);
+        var result = await handler.Handle(new GetUserCardsQuery(alice.Id), _ct);
+
+        Assert.That(result, Has.Count.EqualTo(2));
+        Assert.That(result.Any(c => c.Name == "AlicePrivate"), Is.True);
+        Assert.That(result.Any(c => c.Name == "BobShared"), Is.True);
+        Assert.That(result.Any(c => c.Name == "BobPrivate"), Is.False);
+    }
+
+    [Test]
+    public async Task CreateCard_WithIsShared_SetsFlag()
+    {
+        var db = NewDb();
+        _uow = new UnitOfWork(db);
+
+        var user = Seed.TestUser();
+        db.Add(user);
+        await db.SaveChangesAsync(_ct);
+
+        var handler = new CreateDiscountCardHandler(_uow, Mapper);
+        var dto = await handler.Handle(new CreateDiscountCardCommand(user.Id, "SharedCard", null, true), _ct);
+
+        Assert.That(dto.IsShared, Is.True);
+
+        var card = await db.DiscountCards.FindAsync(dto.Id);
+        Assert.That(card!.IsShared, Is.True);
     }
 }
