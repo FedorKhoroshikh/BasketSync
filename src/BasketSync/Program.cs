@@ -13,6 +13,10 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ---------- Port (Render sets PORT env var) ----------
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // ---------- DI ----------
 builder.Services
     .AddInfrastructure(builder.Configuration)   // Infrastructure (DB + repositories + UoW)
@@ -73,6 +77,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
+        // TODO Production: ограничить домен Render
+        // policy.WithOrigins("https://basketsync.onrender.com")
         policy.AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
@@ -87,6 +93,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "BasketSync v1"));
+}
+else
+{
+    app.UseHsts();
 }
 
 // ---------- DB connection check ----------
@@ -134,10 +144,12 @@ app.UseExceptionHandler(a => a.Run(async context =>
     // fallback
     Console.Error.WriteLine($"[500] Unhandled exception: {ex}");
     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-    await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = ex?.Message ?? "Внутренняя ошибка сервера" }));
+    var errorMessage = app.Environment.IsDevelopment()
+        ? ex?.Message ?? "Internal server error"
+        : "Internal server error";
+    await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = errorMessage }));
 }));
 
-app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("AllowAll");
 app.UseAuthentication();
@@ -157,6 +169,13 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.MapControllers();
+
+// ---------- Auto-migrate (uncomment for Production if needed) ----------
+// using (var migrateScope = app.Services.CreateScope())
+// {
+//     var migrateDb = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
+//     await migrateDb.Database.MigrateAsync();
+// }
 
 // ---------- Seed default category ----------
 using (var scope = app.Services.CreateScope())
