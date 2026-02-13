@@ -1,3 +1,58 @@
+// ── Google OAuth ──
+const GOOGLE_CLIENT_ID = "342926249132-bqqgmfsl2djel2vf9niibil18j7mb2h0.apps.googleusercontent.com";
+
+function initGoogleSignIn() {
+    if (typeof google === "undefined") {
+        setTimeout(initGoogleSignIn, 100);
+        return;
+    }
+
+    google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse
+    });
+
+    const loginContainer = document.getElementById("google-btn-login");
+    if (loginContainer) {
+        google.accounts.id.renderButton(loginContainer, {
+            theme: "outline", size: "large", text: "signin_with", locale: "ru", width: 360
+        });
+    }
+
+    const registerContainer = document.getElementById("google-btn-register");
+    if (registerContainer) {
+        google.accounts.id.renderButton(registerContainer, {
+            theme: "outline", size: "large", text: "signup_with", locale: "ru", width: 360
+        });
+    }
+}
+
+async function handleGoogleResponse(response) {
+    try {
+        const res = await fetch("/api/auth/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken: response.credential })
+        });
+
+        if (!res.ok) {
+            const text = await res.text();
+            showError("login-error", text || "Ошибка входа через Google");
+            return;
+        }
+
+        const data = await res.json();
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userId", data.userId);
+        localStorage.setItem("userName", data.userName);
+        window.location.href = "index.html";
+    } catch {
+        showError("login-error", "Ошибка входа через Google");
+    }
+}
+
+initGoogleSignIn();
+
 // ── Mode toggle ──
 const loginSection = document.getElementById("login-section");
 const registerSection = document.getElementById("register-section");

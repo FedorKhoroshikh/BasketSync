@@ -26,5 +26,14 @@ public class AuthController(IMediator mediator) : ControllerBase
         return Ok(dto);
     }
 
+    [AllowAnonymous]
+    [HttpPost("google")]
+    public async Task<ActionResult<AuthResultDto>> Google([FromBody] GoogleAuthRequest body, CancellationToken ct)
+    {
+        var dto = await mediator.Send(new GoogleLoginCommand(body.IdToken), ct);
+        return Ok(dto);
+    }
+
     public record AuthRequest(string Name, string Password);
+    public record GoogleAuthRequest(string IdToken);
 }

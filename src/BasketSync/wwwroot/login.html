@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BasketSync — Вход</title>
     <link rel="stylesheet" href="css/styles_auth.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -21,6 +22,8 @@
             <input type="password" class="auth-field" id="login-password" placeholder="Пароль" autocomplete="current-password">
             <button class="auth-btn" id="btn-login">Войти</button>
         </div>
+        <div class="auth-divider"><span>или</span></div>
+        <div id="google-btn-login" class="google-signin-wrapper"></div>
         <p class="auth-toggle">У вас нет аккаунта? <a id="show-register">Создать аккаунт</a></p>
     </div>
 
@@ -35,6 +38,8 @@
             <input type="password" class="auth-field" id="register-confirm" placeholder="Повторите пароль" autocomplete="new-password">
             <button class="auth-btn" id="btn-register">Создать аккаунт</button>
         </div>
+        <div class="auth-divider"><span>или</span></div>
+        <div id="google-btn-register" class="google-signin-wrapper"></div>
         <p class="auth-toggle">Уже есть аккаунт? <a id="show-login">Войти</a></p>
     </div>
 </div>

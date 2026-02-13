@@ -18,6 +18,7 @@ public static class DI_Infrastructure
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtService, JwtService>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
         return services;
     }
 }

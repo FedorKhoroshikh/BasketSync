@@ -139,6 +139,33 @@ body {
     display: block;
 }
 
+/* ── Google OAuth divider ── */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: var(--clr-text-secondary);
+    font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--clr-border);
+}
+
+.auth-divider span {
+    padding: 0 12px;
+}
+
+.google-signin-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
 /* ── Responsive ── */
 @media (max-width: 359px) {
     .auth-logo { font-size: 1.3rem; padding: 10px 20px; }

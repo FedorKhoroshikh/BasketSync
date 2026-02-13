@@ -35,7 +35,8 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Item>().Property(i => i.Name).IsRequired();
             modelBuilder.Entity<ShoppingList>().Property(s => s.Name).IsRequired();
             modelBuilder.Entity<User>().Property(u => u.Name).IsRequired();
-            modelBuilder.Entity<User>().Property(u => u.PwdHash).IsRequired();
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique().HasFilter("\"Email\" IS NOT NULL");
+            modelBuilder.Entity<User>().HasIndex(u => u.GoogleId).IsUnique().HasFilter("\"GoogleId\" IS NOT NULL");
             modelBuilder.Entity<ListItem>().Property(l => l.Quantity).IsRequired();
             modelBuilder.Entity<ListItem>().Property(l => l.IsChecked).IsRequired();
             
