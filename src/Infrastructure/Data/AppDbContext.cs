@@ -13,6 +13,7 @@ namespace Infrastructure.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<DiscountCard> DiscountCards => Set<DiscountCard>();
         public DbSet<CardIdentifier> CardIdentifiers => Set<CardIdentifier>();
+        public DbSet<ListShare> ListShares => Set<ListShare>();
 
         /// <summary>
         /// Entities validation
@@ -77,6 +78,20 @@ namespace Infrastructure.Data
                 .HasOne(d => d.User)
                 .WithMany(u => u.DiscountCards)
                 .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ListShare
+            modelBuilder.Entity<ListShare>()
+                .HasIndex(ls => new { ls.ShoppingListId, ls.UserId }).IsUnique();
+            modelBuilder.Entity<ListShare>()
+                .HasOne(ls => ls.ShoppingList)
+                .WithMany(l => l.Shares)
+                .HasForeignKey(ls => ls.ShoppingListId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<ListShare>()
+                .HasOne(ls => ls.User)
+                .WithMany()
+                .HasForeignKey(ls => ls.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // CardIdentifier

@@ -14,6 +14,7 @@ public sealed class UnitOfWork(AppDbContext db) : IUnitOfWork
     public IRepository<Unit>         Units         => new EfRepository<Unit>(db);
     public IRepository<DiscountCard>   DiscountCards   => new EfRepository<DiscountCard>(db);
     public IRepository<CardIdentifier> CardIdentifiers => new EfRepository<CardIdentifier>(db);
+    public IRepository<ListShare>      ListShares      => new EfRepository<ListShare>(db);
 
     public Task<int> SaveChangesAsync(CancellationToken ct = default)
         => db.SaveChangesAsync(ct);

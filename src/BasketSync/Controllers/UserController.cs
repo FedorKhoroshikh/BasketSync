@@ -61,6 +61,10 @@ public class UserController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("")]
+    public async Task<ActionResult<List<UserSummaryDto>>> GetAllUsers(CancellationToken ct)
+        => Ok(await mediator.Send(new GetAllUsersQuery(), ct));
+
     public record UpdateNameRequest(string Name);
     public record UpdateEmailRequest(string? Email);
     public record ChangePasswordRequest(string Password, string ConfirmPassword);

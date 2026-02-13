@@ -18,6 +18,10 @@ function authFetch(url, options = {}) {
     });
 }
 
+function currentUserId() {
+    return parseInt(localStorage.getItem("userId") || "0");
+}
+
 // ── State ──
 let lists = [];
 let contextTarget = null; // list id for context menu
@@ -37,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupFab();
     setupListModal();
     setupLogout();
+    setupVisibilityRefresh();
 });
 
 // ── User display + Logout ──
@@ -64,6 +69,12 @@ function showToast(msg, isError = false) {
     setTimeout(() => { toastElem.className = "toast"; }, 2500);
 }
 
+function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 // ── Data loading ──
 async function loadShoppingLists() {
     try {
@@ -78,6 +89,13 @@ async function loadShoppingLists() {
     }
 }
 
+// ── Visibility refresh ──
+function setupVisibilityRefresh() {
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) loadShoppingLists();
+    });
+}
+
 // ── Render ──
 function renderLists(items) {
     container.innerHTML = "";
@@ -85,7 +103,7 @@ function renderLists(items) {
     if (items.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state__icon">📋</div>
+                <div class="empty-state__icon">&#x1F4CB;</div>
                 <p>У вас пока нет списков</p>
                 <p class="empty-state__hint">Нажмите + чтобы создать список покупок</p>
             </div>`;
@@ -104,11 +122,16 @@ function createListCard(list) {
 
     const itemCount = list.items ? list.items.length : 0;
     const checkedCount = list.items ? list.items.filter(i => i.isChecked).length : 0;
+    const isOwn = list.userId === currentUserId();
+
+    const sharedBadge = list.isShared && !isOwn
+        ? '<span class="list-card__badge">&#x1F465;</span>'
+        : '';
 
     card.innerHTML = `
         <div class="list-card__body" data-id="${list.id}">
             <div class="list-card__info">
-                <span class="list-card__name">${list.name}</span>
+                <span class="list-card__name">${escapeHtml(list.name)} ${sharedBadge}</span>
                 ${itemCount > 0
                     ? `<span class="list-card__meta">${checkedCount} из ${itemCount} куплено</span>`
                     : `<span class="list-card__meta">Пусто</span>`}
@@ -117,7 +140,7 @@ function createListCard(list) {
                 <path d="M9 18l6-6-6-6"/>
             </svg>
         </div>
-        <button class="list-card__menu" data-id="${list.id}" aria-label="Меню">⋮</button>
+        ${isOwn ? `<button class="list-card__menu" data-id="${list.id}" aria-label="Меню">&#x22EE;</button>` : ''}
     `;
 
     // Navigate on card body click
@@ -134,6 +157,7 @@ function setupFab() {
         editingListId = null;
         document.getElementById("list-modal-title").textContent = "Новый список";
         document.getElementById("list-name-input").value = "";
+        document.getElementById("list-shared").checked = true;
         openModal("list-modal");
         setTimeout(() => document.getElementById("list-name-input").focus(), 100);
     });
@@ -143,6 +167,7 @@ function setupFab() {
 function setupListModal() {
     document.getElementById("btn-save-list").addEventListener("click", async () => {
         const name = document.getElementById("list-name-input").value.trim();
+        const isShared = document.getElementById("list-shared").checked;
         if (!name) {
             showToast("Введите название списка", true);
             return;
@@ -154,20 +179,20 @@ function setupListModal() {
                 const res = await authFetch(`/api/lists/${editingListId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name })
+                    body: JSON.stringify({ name, isShared })
                 });
                 if (res.status === 409) {
                     showToast("Список с таким именем уже существует", true);
                     return;
                 }
                 if (!res.ok) throw new Error();
-                showToast("Список переименован");
+                showToast("Список обновлён");
             } else {
                 // Create
                 const res = await authFetch("/api/lists", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name })
+                    body: JSON.stringify({ name, isShared })
                 });
                 if (res.status === 409) {
                     showToast("Список с таким именем уже существует", true);
@@ -223,12 +248,20 @@ function setupContextMenu() {
         editingListId = contextTarget;
         document.getElementById("list-modal-title").textContent = "Переименовать";
         document.getElementById("list-name-input").value = list.name;
+        document.getElementById("list-shared").checked = !!list.isShared;
         openModal("list-modal");
         setTimeout(() => {
             const input = document.getElementById("list-name-input");
             input.focus();
             input.select();
         }, 100);
+    });
+
+    // Share
+    document.getElementById("ctx-share").addEventListener("click", () => {
+        menu.classList.remove("context-menu--visible");
+        if (!contextTarget) return;
+        openShareModal(contextTarget);
     });
 
     // Delete
@@ -267,6 +300,87 @@ function closeModal(id) {
     document.getElementById(id).classList.remove("modal--visible");
     document.body.classList.remove("no-scroll");
 }
+
+// ── Share modal ──
+let shareListId = null;
+
+async function openShareModal(listId) {
+    shareListId = listId;
+    const list = lists.find(l => l.id === listId);
+    if (!list) return;
+
+    const shareAllCheckbox = document.getElementById("share-all");
+    shareAllCheckbox.checked = !!list.isShared;
+
+    const usersContainer = document.getElementById("share-users-list");
+    usersContainer.innerHTML = '<div class="loading">Загрузка...</div>';
+    openModal("share-modal");
+
+    try {
+        const [usersRes, sharesRes] = await Promise.all([
+            authFetch("/api/users"),
+            authFetch(`/api/lists/${listId}/shares`)
+        ]);
+
+        const allUsers = await usersRes.json();
+        const sharedUserIds = await sharesRes.json();
+        const myId = currentUserId();
+
+        const otherUsers = allUsers.filter(u => u.id !== myId);
+        if (otherUsers.length === 0) {
+            usersContainer.innerHTML = '<p class="empty-state__hint">Нет других пользователей</p>';
+            return;
+        }
+
+        usersContainer.innerHTML = otherUsers.map(u => `
+            <label class="checkbox-label">
+                <input type="checkbox" value="${u.id}" ${sharedUserIds.includes(u.id) ? "checked" : ""}>
+                ${escapeHtml(u.name)}
+            </label>
+        `).join("");
+
+        // "Select all" toggles user checkboxes
+        shareAllCheckbox.addEventListener("change", () => {
+            usersContainer.querySelectorAll("input[type=checkbox]").forEach(cb => {
+                cb.checked = shareAllCheckbox.checked;
+            });
+        });
+    } catch {
+        usersContainer.innerHTML = '<p class="empty-state__hint">Ошибка загрузки</p>';
+    }
+}
+
+document.getElementById("btn-save-shares").addEventListener("click", async () => {
+    if (!shareListId) return;
+    const isShared = document.getElementById("share-all").checked;
+    const userIds = [...document.querySelectorAll("#share-users-list input[type=checkbox]:checked")]
+        .map(cb => +cb.value);
+
+    try {
+        // Update isShared flag via rename (keeping current name)
+        const list = lists.find(l => l.id === shareListId);
+        if (list) {
+            await authFetch(`/api/lists/${shareListId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: list.name, isShared })
+            });
+        }
+
+        // Update specific user shares
+        await authFetch(`/api/lists/${shareListId}/shares`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userIds })
+        });
+
+        closeModal("share-modal");
+        showToast("Доступ обновлён");
+        await loadShoppingLists();
+    } catch {
+        showToast("Ошибка сохранения", true);
+    }
+});
 
 function setupModals() {
     document.querySelectorAll(".modal-overlay").forEach(overlay => {

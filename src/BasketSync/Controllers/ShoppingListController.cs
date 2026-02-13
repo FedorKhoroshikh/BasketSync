@@ -20,12 +20,12 @@ public class ShoppingListController(IMediator mediator) : ControllerBase
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ListItemDto>> Update(int id, [FromBody] RenameListRequest body, CancellationToken ct)
-        => Ok(await mediator.Send(new RenameListCommand(id, body.Name), ct));
+        => Ok(await mediator.Send(new RenameListCommand(id, body.Name, body.IsShared), ct));
 
     [HttpPost]
     public async Task<ActionResult<ShoppingListDto>> Create([FromBody] CreateListRequest body, CancellationToken ct)
     {
-        var dto = await mediator.Send(new CreateListCommand(body.Name, GetUserId()), ct);
+        var dto = await mediator.Send(new CreateListCommand(body.Name, GetUserId(), body.IsShared), ct);
         return CreatedAtAction(nameof(Get), new {id = dto.Id}, dto);
     }
 
@@ -83,11 +83,27 @@ public class ShoppingListController(IMediator mediator) : ControllerBase
 
 #endregion
 
+#region Shares
+
+    [HttpGet("{id:int}/shares")]
+    public async Task<ActionResult<int[]>> GetShares(int id, CancellationToken ct)
+        => Ok(await mediator.Send(new GetListSharesQuery(id), ct));
+
+    [HttpPut("{id:int}/shares")]
+    public async Task<ActionResult> UpdateShares(int id, [FromBody] UpdateSharesRequest body, CancellationToken ct)
+    {
+        await mediator.Send(new UpdateListSharesCommand(id, GetUserId(), body.UserIds), ct);
+        return NoContent();
+    }
+
+#endregion
+
 #region ShoppingList requests
 
     public record RemoveListItemRequest(int ItemId);
-    public record RenameListRequest(string Name);
-    public record CreateListRequest(string Name);
+    public record RenameListRequest(string Name, bool IsShared);
+    public record CreateListRequest(string Name, bool IsShared = true);
+    public record UpdateSharesRequest(int[] UserIds);
 
 #endregion
 

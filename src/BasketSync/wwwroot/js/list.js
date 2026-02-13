@@ -22,7 +22,9 @@ function authFetch(url, options = {}) {
 const listId = new URLSearchParams(location.search).get("id");
 const apiBase = `/api/lists/${listId}`;
 let currentItems = [];
+let currentListData = null;
 let contextTarget = null; // {id, listItemId} for context menu
+let pollTimer = null;
 
 // ── DOM refs ──
 const titleElem    = document.getElementById("list-title");
@@ -48,6 +50,10 @@ function showToast(msg, isError = false) {
     setTimeout(() => { toastElem.className = "toast"; }, 2500);
 }
 
+function currentUserId() {
+    return parseInt(localStorage.getItem("userId") || "0");
+}
+
 // ── Data loading ──
 async function loadList() {
     try {
@@ -55,14 +61,49 @@ async function loadList() {
         if (!res.ok) throw new Error("Ошибка загрузки списка");
         const data = await res.json();
 
+        currentListData = data;
         document.title = data.name + " — BasketSync";
-        titleElem.textContent = data.name;
+        const sharedLabel = data.isShared ? " (общий)" : "";
+        titleElem.textContent = data.name + sharedLabel;
         currentItems = data.items || [];
         renderItems(currentItems);
+        startPolling();
     } catch (e) {
         container.innerHTML = '<div class="empty-state">Не удалось загрузить список</div>';
         showToast(e.message, true);
     }
+}
+
+// ── Polling for shared lists ──
+function startPolling() {
+    if (pollTimer) return;
+    if (!currentListData || !currentListData.isShared) return;
+
+    pollTimer = setInterval(pollList, 5000);
+    document.addEventListener("visibilitychange", onVisibility);
+}
+
+async function pollList() {
+    if (document.hidden) return;
+    try {
+        const res = await authFetch(apiBase);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const oldJson = JSON.stringify(currentItems);
+        const newJson = JSON.stringify(data.items || []);
+        if (oldJson !== newJson) {
+            currentListData = data;
+            currentItems = data.items || [];
+            const scrollY = window.scrollY;
+            renderItems(currentItems);
+            window.scrollTo(0, scrollY);
+        }
+    } catch { /* silent */ }
+}
+
+function onVisibility() {
+    if (!document.hidden) pollList();
 }
 
 // ── Render ──

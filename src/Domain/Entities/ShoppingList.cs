@@ -7,13 +7,19 @@ public class ShoppingList
     
     public int UserId { get; private set; }
     public User User { get; private set; } = null!;
-    
+    public bool IsShared { get; private set; } = true;
+
     private readonly List<ListItem> _listItems = [];
     public List<ListItem> ListItems => _listItems;
-    
+
+    private readonly List<ListShare> _shares = [];
+    public IReadOnlyCollection<ListShare> Shares => _shares;
+
     public ShoppingList() { }
     public ShoppingList(string name, User user)
-        => (Name, User) = (name, user);
+        => (Name, User, IsShared) = (name, user, true);
+
+    public void SetShared(bool isShared) => IsShared = isShared;
     
     public ListItem AddItem(Item item, int quality)
     {

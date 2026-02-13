@@ -12,5 +12,6 @@ public interface IUnitOfWork
     IRepository<Unit>         Units         { get; }
     IRepository<DiscountCard>   DiscountCards   { get; }
     IRepository<CardIdentifier> CardIdentifiers { get; }
+    IRepository<ListShare>      ListShares      { get; }
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

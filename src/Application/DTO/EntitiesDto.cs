@@ -1,6 +1,6 @@
 namespace Application.DTO;
 
-public record ShoppingListDto(int Id, int UserId, string Name, List<ListItemDto>? Items = null);
+public record ShoppingListDto(int Id, int UserId, string Name, bool IsShared, List<ListItemDto>? Items = null);
 
 public record ListItemDto(int Id, int ItemId, int Quantity, bool IsChecked,
     string? Comment = null, string? ItemName = null,
@@ -23,3 +23,5 @@ public record DiscountCardDto(int Id, int UserId, string Name, string? Comment, 
 public record CardIdentifierDto(int Id, int DiscountCardId, int Type, string? Value, string? ImagePath = null);
 
 public record UserProfileDto(int Id, string Name, string? Email, bool HasPassword, bool HasGoogle);
+
+public record UserSummaryDto(int Id, string Name);
