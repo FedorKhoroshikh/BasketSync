@@ -101,7 +101,7 @@ public class DiscountCardController(IMediator mediator, IFileStorageService file
     public async Task<ActionResult<DiscountCardDto>> ResolveCard([FromBody] ResolveCardRequest body, CancellationToken ct)
         => Ok(await mediator.Send(new ResolveCardCommand(body.Value), ct));
 
-    public record CreateCardRequest(string Name, string? Comment, bool IsShared = false);
+    public record CreateCardRequest(string Name, string? Comment, bool IsShared = true);
     public record UpdateCardRequest(string Name, string? Comment, bool IsShared = false);
     public record ResolveCardRequest(string Value);
 }

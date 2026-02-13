@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Application.Commands;
 
-public sealed record CreateDiscountCardCommand(int UserId, string Name, string? Comment, bool IsShared = false) : IRequest<DiscountCardDto>;
+public sealed record CreateDiscountCardCommand(int UserId, string Name, string? Comment, bool IsShared = true) : IRequest<DiscountCardDto>;
 
 public sealed record UpdateDiscountCardCommand(int Id, string Name, string? Comment, bool IsShared = false) : IRequest<DiscountCardDto>;
 

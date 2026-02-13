@@ -271,7 +271,7 @@ function openCardModal(card) {
         card ? "Редактировать карту" : "Новая карта";
     document.getElementById("card-name").value = card ? card.name : "";
     document.getElementById("card-comment").value = card ? (card.comment || "") : "";
-    document.getElementById("card-shared").checked = card ? !!card.isShared : false;
+    document.getElementById("card-shared").checked = card ? !!card.isShared : true;
     openModal("card-modal");
     setTimeout(() => document.getElementById("card-name").focus(), 100);
 }
@@ -398,7 +398,7 @@ function openIdentifierModal(existing = null) {
     editingIdentifierId = existing ? existing.id : null;
     editingIdentifierImagePath = existing ? existing.imagePath : null;
 
-    document.getElementById("identifier-type").value = existing ? String(existing.type) : "0";
+    document.getElementById("identifier-type").value = existing ? String(existing.type) : "1";
     document.getElementById("identifier-value").value = existing ? (existing.value || "") : "";
     selectedImageFile = null;
     resetDropZone();
