@@ -873,6 +873,103 @@ main {
 
 .identifier-thumb:hover { transform: scale(1.15); }
 
+/* ── Profile page ── */
+.profile-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #E8F5E9;
+    color: #2E7D32;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.profile-section {
+    background: var(--clr-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.profile-section__title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--clr-text-secondary);
+    margin-bottom: 10px;
+}
+
+.profile-field-row {
+    display: flex;
+    gap: 8px;
+}
+
+.profile-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid var(--clr-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.profile-input:focus { border-color: var(--clr-primary); }
+
+.profile-input--full {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.profile-save-btn {
+    padding: 10px 16px;
+    background: var(--clr-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.profile-save-btn:hover { background: var(--clr-primary-dark); }
+
+.profile-save-btn--full {
+    display: block;
+    width: 100%;
+}
+
+.profile-link-btn {
+    background: none;
+    border: none;
+    color: var(--clr-danger);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    padding: 0;
+}
+
+.profile-link-btn:hover { text-decoration: underline; }
+
+.profile-msg {
+    font-size: 0.82rem;
+    margin-top: 6px;
+    min-height: 1.2em;
+}
+
+.profile-msg--error { color: var(--clr-danger); }
+.profile-msg--ok { color: var(--clr-success); }
+
 /* ── Responsive ── */
 @media (min-width: 600px) {
     main { padding: 12px 0; }

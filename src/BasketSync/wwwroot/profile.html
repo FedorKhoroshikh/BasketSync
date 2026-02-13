@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль — BasketSync</title>
+    <link rel="stylesheet" href="css/styles_list.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+    <a href="index.html" class="back-btn" aria-label="Назад">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <h1>Профиль</h1>
+</header>
+
+<!-- Main content -->
+<main>
+    <div class="loading" id="loading">Загрузка...</div>
+
+    <div id="profile-content" style="display:none;">
+
+        <!-- Google badge -->
+        <div id="google-badge" class="profile-badge" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            Google подключён
+        </div>
+
+        <!-- Name section -->
+        <section class="profile-section">
+            <h2 class="profile-section__title">Имя пользователя</h2>
+            <div class="profile-field-row">
+                <input type="text" class="profile-input" id="input-name" placeholder="Имя">
+                <button class="profile-save-btn" id="btn-save-name">Сохранить</button>
+            </div>
+            <div class="profile-msg" id="msg-name"></div>
+        </section>
+
+        <!-- Email section -->
+        <section class="profile-section">
+            <h2 class="profile-section__title">Электронная почта</h2>
+            <div class="profile-field-row">
+                <input type="email" class="profile-input" id="input-email" placeholder="email@example.com">
+                <button class="profile-save-btn" id="btn-save-email">Сохранить</button>
+            </div>
+            <button class="profile-link-btn" id="btn-remove-email" style="display:none;">Удалить email</button>
+            <div class="profile-msg" id="msg-email"></div>
+        </section>
+
+        <!-- Password section -->
+        <section class="profile-section">
+            <h2 class="profile-section__title">Изменить пароль</h2>
+            <input type="password" class="profile-input profile-input--full" id="input-password" placeholder="Новый пароль" autocomplete="new-password">
+            <input type="password" class="profile-input profile-input--full" id="input-password-confirm" placeholder="Повторите пароль" autocomplete="new-password">
+            <button class="profile-save-btn profile-save-btn--full" id="btn-save-password">Сохранить пароль</button>
+            <div class="profile-msg" id="msg-password"></div>
+        </section>
+
+    </div>
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="js/profile.js"></script>
+</body>
+</html>

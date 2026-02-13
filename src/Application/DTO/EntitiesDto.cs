@@ -21,3 +21,5 @@ public record DiscountCardDto(int Id, int UserId, string Name, string? Comment, 
     List<CardIdentifierDto>? Identifiers = null);
 
 public record CardIdentifierDto(int Id, int DiscountCardId, int Type, string? Value, string? ImagePath = null);
+
+public record UserProfileDto(int Id, string Name, string? Email, bool HasPassword, bool HasGoogle);
